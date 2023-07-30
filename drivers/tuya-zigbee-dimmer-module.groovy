@@ -62,10 +62,9 @@ ver 0.4.6  2023/06/11 kkossev      - child devices creation critical bug fix.
 ver 0.5.0  2023/06/14 kkossev      - added trace logging; fixed healthStatus offline for TS0601 and Lonsonho 2nd gang; temporary disabled the initialize() command; changed _TZ3210_ngqk6jia to Lonsonho TS011E group; fixed TS0601 1st gang not working
 ver 0.5.1  2023/06/15 kkossev      - added TS110E _TZ3210_3mpwqzuu 2 gang; fixed minLevel bug scaling; added RTT measurement in the ping command; added rxCtr, txCtr, switchCtr, leveCtr; _TZ3210_4ubylghk inClusters correction; TS110E_LONSONHO_DIMMER group model bug fix;
 ver 0.5.2  2023/06/19 kkossev      - added digital/physical; checkDriverVersion fix; _TZ3210_ngqk6jia ping fix;
-ver 0.6.0  2023/07/30 kkossev      - (dev. branch) child devices ping(), toggle(), physical/digital, healthStatus offline bug fixes; 
+ver 0.6.0  2023/07/30 kkossev      - (dev. branch) child devices ping(), toggle(), physical/digital, healthStatus offline bug fixes; added [refresh] event info;
 *
-*                                   TODO: Lonsonho _TZ3210_4ubylghk : refresh not working; parse: unsupported attribute 4002; 
-*                                   TODO: clearStats toggle in Preferences
+*                                   TODO: Lonsonho _TZ3210_4ubylghk : parse: unsupported attribute 4002; bulb type :  https://github.com/zigpy/zha-device-handlers/issues/1415#issuecomment-1062843118
 *                                   TODO: Lonsonho _TZ3210_pagajpog : when momentarily push switch 1. It is like it doesn't recognize it as pressing the switch, but pressing it again can cause it to go into pairing mode. @user3633
 *                                   TODO: Girier _TZ3210_3mpwqzuu: physical switch not reflected in the driver @user5386
 *                                   TODO: Girier _TZ3210_3mpwqzuu: Every change in intensity through the dashboard, the lamp reaches the desired level and then lowers intensity until it is turned off, (for both channels) @user5386
@@ -75,12 +74,11 @@ ver 0.6.0  2023/07/30 kkossev      - (dev. branch) child devices ping(), toggle(
 *                                   TODO: Tuya Fan Switch support
 *                                   TODO: add TS110E 'light_type', 'switch_type'
 *                                   TODO: add startLevelChange/stopLevelChange (Gledopto)
-*                                   TODO: add [refresh] event type
 *
 */
 
 def version() { "0.6.0" }
-def timeStamp() {"2023/07/30 10:16 PM"}
+def timeStamp() {"2023/07/30 11:43 PM"}
 
 @Field static final Boolean _DEBUG = false
 
@@ -137,8 +135,8 @@ metadata {
     }
     
     preferences {
-        input "debugEnable", "bool", title: "<b>Enable debug logging</b>", required: false, defaultValue: DEFAULT_DEBUG_OPT
         input "infoEnable", "bool", title: "<b>Enable info logging</b>", required: false, defaultValue: true
+        input "debugEnable", "bool", title: "<b>Enable debug logging</b>", required: false, defaultValue: DEFAULT_DEBUG_OPT
         input "autoOn", "bool", title: "<b>Turn on when level adjusted</b>", description: "<i>Switch turns on automatically when dimmer level is adjusted.</i>", required: true, multiple: false, defaultValue: true
         input "autoRefresh", "bool", title: "<b>Auto refresh when level adjusted</b>", description: "<i>Automatically send an Refresh command when dimmer level is adjusted.</i>", required: true, multiple: false, defaultValue: false
         
@@ -170,6 +168,7 @@ metadata {
 @Field static final Boolean DEFAULT_DEBUG_OPT = true
 @Field static final int COMMAND_TIMEOUT = 10                 // Command timeout before setting healthState to offline
 @Field static final Integer MAX_PING_MILISECONDS = 10000     // rtt more than 10 seconds will be ignored
+@Field static final Integer REFRESH_TIMER = 5000             // refresh time in miliseconds
 @Field static final String UNKNOWN =  'UNKNOWN'
 @Field static final int DEFAULT_MIN_LEVEL = 0
 @Field static final int DEFAULT_MAX_LEVEL = 100
@@ -698,6 +697,9 @@ if parent, then act on endpoint 1
 // sends Zigbee commands to refresh the switch and the level
 def refresh() {
     getDW().scheduleCommandTimeoutCheck()
+    if (state.states == null) state.states = [:]
+    state.states["isRefresh"] = true    
+    runInMillis( REFRESH_TIMER, clearRefreshRequest, [overwrite: true])                 // 3 seconds
     if (isParent()) {
         logDebug "refresh: parent ${indexToChildDni(0)}"
         ArrayList<String> cmds = cmdRefresh(indexToChildDni(0))
@@ -766,7 +768,7 @@ def ping() {
     if (state.lastTx == null) { state.lastTx = [:] }
     def now = new Date().getTime()
    
-    log.warn "isParent() = ${isParent()}   isChild() = ${isChild()}"
+    logTrace "isParent() = ${isParent()}   isChild() = ${isChild()}"
     if (isParent())
     {
         // parent device
@@ -807,12 +809,15 @@ void setCmdTimeNow(){
 
 // TODO - not working!
 void setState(st, index, val) {
-    log.trace "setState ($st, $index, $val)"
+    logTrace "setState ($st, $index, $val)"
     def str = "$st[\"$index\"]"
-    log.warn "str=${str}"
+    logTrace "str=${str}"
     state.$str = val 
 }
 
+def clearRefreshRequest()   { if (state.states == null) {state.states = [:] }; state.states["isRefresh"] = false }
+def clearIsDigital()        { if (state.states == null) {state.states = [:] }; state.states["isDigital"] = false }
+def switchDebouncingClear() { if (state.states == null) {state.states = [:] }; state.states["debounce"]  = false }
 
 /*
 ---------------------------------------------------------------------------------------------------
@@ -828,10 +833,8 @@ def cmdRefresh(String childDni) {
     setCmdTimeNow()
     if (isLonsonho() || isTuyaBulb()) {
         return [
-            "he rattr 0x${device.deviceNetworkId} 0x${endpointId} 0x0006 0 {}",
-            "delay 100",
-            "he rattr 0x${device.deviceNetworkId} 0x${endpointId} 0x0008 0xF000 {}",
-            "delay 100"
+            "he rattr 0x${device.deviceNetworkId} 0x${endpointId} 0x0006 0 {}",      "delay 100",
+            "he rattr 0x${device.deviceNetworkId} 0x${endpointId} 0x0008 0xF000 {}", "delay 100"
         ]
     }
     else {
@@ -1203,18 +1206,49 @@ Child only code
 */
 
 def onSwitchState(value) {
+    def map = [:] 
     if (state.stats != null) state.stats['switchCtr'] = (state.stats['switchCtr'] ?: 0) + 1 else state.stats=[:]
     def valueText = value == 0 ? "off" : "on"
-    logInfo "was turned ${valueText} [${getEventType()}]"
-    sendEvent(name:"switch", value: valueText, descriptionText: "${device.displayName} was turned ${valueText}", type: getEventType(), unit: null)
+    map.name = "switch"
+    map.value = valueText
+    map.type = getEventType()
+    if (state.states == null) { state.states = [:] }
+    boolean isRefresh = state.states["isRefresh"] ?: false
+    if (isRefresh == true) {
+        map.descriptionText = "${device.displayName} is ${map.value} [Refresh]"
+        map.isStateChange = true
+    }
+    else {
+        map.descriptionText = "${device.displayName} was turned ${map.value} [${map.type}]"
+    } 
+    logInfo "${map.descriptionText}"
+    //logInfo "was turned ${valueText} [${getEventType()}]"
+    sendEvent(map)
+    //sendEvent(name: map.name, value: valueText, descriptionText: "${device.displayName} was turned ${valueText}", type: getEventType(), unit: null)
 }
 
 def onSwitchLevel(value) {
+    def map = [:] 
     if (state.stats != null) state.stats['levelCtr'] = (state.stats['levelCtr'] ?: 0) + 1 else state.stats=[:]
-    def level = valueToLevel(safeToInt(value))    // TODO - null pointer exception! https://community.hubitat.com/t/girier-tuya-zigbee-3-0-dimmable-1-gang-switch-w-neutral/112620/10?u=kkossev 
+    def level = valueToLevel(safeToInt(value))
+    map.name = "level"
+    map.value = level
+    map.unit = "%"
+    map.type = getEventType()
+    if (state.states == null) { state.states = [:] }
+    boolean isRefresh = state.states["isRefresh"] ?: false
+    if (isRefresh == true) {
+        map.descriptionText = "${device.displayName} level is ${map.value} [Refresh]"
+        map.isStateChange = true
+    }
+    else {
+        map.descriptionText = "${device.displayName} level was set to ${map.value} [${map.type}]"
+    }         
     logDebug "onSwitchLevel: Value=${value} level=${level} (value=${value})"
-    logInfo "was set to ${level}% [${getEventType()}]"
-    sendEvent(name:"level", value: level, descriptionText:"${device.displayName} was set ${level}%", type: getEventType(), unit: "%")
+    logInfo "${map.descriptionText}"
+    //logInfo "was set to ${level}% [${getEventType()}]"
+    sendEvent(map)
+    //sendEvent(name:"level", value: level, descriptionText:"${device.displayName} was set ${level}%", type: getEventType(), unit: "%")
 }
     
 /*
@@ -1285,7 +1319,7 @@ def getChildByEndpointId(endpointId) {
             log.warn "<b>can not find the child device! Remove the device and pair it again to HE!</b>"
             // try obtaining the child device from the list ... in case the parent DNI was changed!
             cd =  getChildDevices()[(endpointId as int) -1]
-            log.warn "cd=${cd}"
+            logWarn "cd=${cd}"
         }
         return cd
     }
@@ -1441,14 +1475,14 @@ def getDestinationEP() {
 
 def resetStats() {
     state.stats = [:]
-//    state.states = [:]
+    state.states = [:]
     state.lastRx = [:]
     state.lastTx = [:]
 //    state.health = [:]
     state.stats["rxCtr"] = 0
     state.stats["txCtr"] = 0
 //    state.states["isDigital"] = false
-//    state.states["isRefresh"] = false
+    state.states["isRefresh"] = false
 //    state.health["offlineCtr"] = 0
  //   state.health["checkCtr3"] = 0
 }
@@ -1531,7 +1565,7 @@ def updated() {
                 logInfo "### updating the settings for the ${eps} gangs device -  ${device.getDataValue("manufacturer")} - <b>FIRST CHANNEL ONLY</b>"
             }
             else {
-                log.warn "this.device.getData() = ${this.device.getData()}"
+                logTrace "this.device.getData() = ${this.device.getData()}"
                 cmd = this.device.getData().componentName[-2..-1]
                 logInfo "### updating settings for child device ${this.device.getData().componentName} ... device #${cmd}"
             }
@@ -1834,13 +1868,13 @@ void sendRttEvent( String value=null) {
 
 
 private void sendHealthStatusEventAll(String status) {
-    log.trace "sendHealthStatusEventAll: ${status}   DW=${getDW()}     size = ${getChildDevices().size()}"
+    logTrace "sendHealthStatusEventAll: ${status}   DW=${getDW()}     size = ${getChildDevices().size()}"
     
     if (device.currentValue('healthStatus') != status) {
         String descriptionText = "healthStatus was set to ${status}"
     	def cd = getChildDevices()
         cd.each { child ->
-            log.warn"child=${child}"
+            logTrace"child=${child}"
             child?.sendEvent(name: 'healthStatus', value: status, descriptionText: descriptionText)
             child?.logInfo "${descriptionText}"
         }   
@@ -1915,6 +1949,8 @@ def moveToLevelTuya( level, delay) {
 def testRefresh() {
     logWarn "testRefresh: see the live logs"
     ArrayList<String> cmds = []
+    if (state.states == null) state.states = [:]
+    state.states["isRefresh"] = true    
     def ep = safeToInt(getDestinationEP())
     cmds = zigbee.readAttribute(0x0000, [0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006], [destEndpoint:ep], delay=200)
     // commands : off:0 on:1 toggle:2
@@ -1978,7 +2014,7 @@ def getParentDNI() {
 
 def setState( st, val )
 {
-    log.trace "setState ($st, $val)"
+    logTrace "setState ($st, $val)"
     state."$st" = val
 }
 
