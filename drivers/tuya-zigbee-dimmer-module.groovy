@@ -64,11 +64,11 @@ ver 0.5.1  2023/06/15 kkossev      - added TS110E _TZ3210_3mpwqzuu 2 gang; fixed
 ver 0.5.2  2023/06/19 kkossev      - added digital/physical; checkDriverVersion fix; _TZ3210_ngqk6jia ping fix;
 ver 0.6.0  2023/07/30 kkossev      - (dev. branch) child devices ping(), toggle(), physical/digital, healthStatus offline bug fixes; added [refresh] event info;
 *
-*                                   TODO: Lonsonho _TZ3210_4ubylghk : parse: unsupported attribute 4002; bulb type :  https://github.com/zigpy/zha-device-handlers/issues/1415#issuecomment-1062843118
+*                                   TODO: Lonsonho _TZ3210_4ubylghk : bulb type :  https://github.com/zigpy/zha-device-handlers/issues/1415#issuecomment-1062843118
 *                                   TODO: Lonsonho _TZ3210_pagajpog : when momentarily push switch 1. It is like it doesn't recognize it as pressing the switch, but pressing it again can cause it to go into pairing mode. @user3633
 *                                   TODO: Girier _TZ3210_3mpwqzuu: physical switch not reflected in the driver @user5386
 *                                   TODO: Girier _TZ3210_3mpwqzuu: Every change in intensity through the dashboard, the lamp reaches the desired level and then lowers intensity until it is turned off, (for both channels) @user5386
-*                                   TODO: TS0601 3 gangs - toggle() is not working for the 2nd and the 3rd gang
+*                                   TODO: TS0601 3 gangs - check whether toggle() is working for the 2nd and the 3rd gang
 *                                   TODO: Enable the Initialize() button w/  Yes/No selection
 *                                   TODO: TS110E_GIRIER_DIMMER TS011E power_on_behavior_1, TS110E_switch_type ['toggle', 'state', 'momentary']) (TS110E_options - needsMagic())
 *                                   TODO: Tuya Fan Switch support
@@ -470,6 +470,12 @@ void parse(String description) {
                             logTrace "parse: isFirst=${isFirst} this=${this} child=${child} value=${value}"
                         }
                     }
+                }
+                else if (descMap?.attrId == "4001") {
+                    logDebug "On Time is ${value}"
+                }
+                else if (descMap?.attrId == "4002") {
+                    logDebug "Off Wait Time is ${value}"
                 }
                 else {
                     logDebug "parse: unsupported attribute ${descMap?.attrId} cluster ${descMap.clusterId} command ${descMap?.command}, data=${descMap.data}"
@@ -1316,10 +1322,9 @@ def getChildByEndpointId(endpointId) {
         def cd = getChildDevice(endpointIdToChildDni(endpointId))
         logTrace "getChildByEndpointId(${endpointId}) returning getChildDevice: ${cd} (childDNI=${endpointIdToChildDni(endpointId)})"
         if (cd == null) {
-            log.warn "<b>can not find the child device! Remove the device and pair it again to HE!</b>"
             // try obtaining the child device from the list ... in case the parent DNI was changed!
             cd =  getChildDevices()[(endpointId as int) -1]
-            logWarn "cd=${cd}"
+            logTrace "parent DNI was changed... cd=${cd}"
         }
         return cd
     }
