@@ -61,8 +61,10 @@ ver 0.4.5  2023/05/17 kkossev      - removed obsolete deviceSimulation options; 
 ver 0.4.6  2023/06/11 kkossev      - child devices creation critical bug fix.
 ver 0.5.0  2023/06/14 kkossev      - added trace logging; fixed healthStatus offline for TS0601 and Lonsonho 2nd gang; temporary disabled the initialize() command; changed _TZ3210_ngqk6jia to Lonsonho TS011E group; fixed TS0601 1st gang not working
 ver 0.5.1  2023/06/15 kkossev      - added TS110E _TZ3210_3mpwqzuu 2 gang; fixed minLevel bug scaling; added RTT measurement in the ping command; added rxCtr, txCtr, switchCtr, leveCtr; _TZ3210_4ubylghk inClusters correction; TS110E_LONSONHO_DIMMER group model bug fix;
-ver 0.5.2  2023/06/19 kkossev      - (dev. branch) added digital/physical; checkDriverVersion fix; _TZ3210_ngqk6jia ping fix;
+ver 0.5.2  2023/06/19 kkossev      - added digital/physical; checkDriverVersion fix; _TZ3210_ngqk6jia ping fix;
+ver 0.6.0  2023/07/30 kkossev      - (dev. branch) child devices ping() and toggle() fixes; 
 *
+*                                   TODO: Lonsonho _TZ3210_4ubylghk : physical/digital not working for child devices; refresh not working; parse: unsupported attribute 4002; 
 *                                   TODO: Lonsonho _TZ3210_pagajpog : healthStatus offline bug!
 *                                   TODO: clearStats toggle in Preferences
 *                                   TODO: Lonsonho _TZ3210_pagajpog : when momentarily push switch 1. It is like it doesn't recognize it as pressing the switch, but pressing it again can cause it to go into pairing mode. @user3633
@@ -74,15 +76,21 @@ ver 0.5.2  2023/06/19 kkossev      - (dev. branch) added digital/physical; check
 *                                   TODO: Tuya Fan Switch support
 *                                   TODO: add TS110E 'light_type', 'switch_type'
 *                                   TODO: add startLevelChange/stopLevelChange (Gledopto)
+*                                   TODO: add [refresh] event type
 *
 */
 
-def version() { "0.5.2" }
-def timeStamp() {"2023/06/19 7:20 PM"}
-
-import groovy.transform.Field
+def version() { "0.6.0" }
+def timeStamp() {"2023/07/30 9:49 PM"}
 
 @Field static final Boolean _DEBUG = false
+
+import groovy.transform.Field
+import hubitat.device.HubAction
+import hubitat.device.Protocol
+import com.hubitat.app.DeviceWrapper
+import com.hubitat.app.ChildDeviceWrapper
+import com.hubitat.app.ParentDeviceWrapper
 
 metadata {
     definition (
@@ -230,6 +238,7 @@ metadata {
 
 def getNumEps() {return config()?.numEps ?: 1}
 def isParent()  {return getParent() == null }
+def isChild()   {return getParent() != null }
 def config() { return modelConfigs[device.getDataValue("manufacturer")] }
 
 @Field static final Map deviceProfilesV2 = [
@@ -546,7 +555,7 @@ void parseBasicCluster(final Map descMap) {
                 sendRttEvent()
             }
             else  {
-                logWarn "ignored PING_ATTR_ID, timeRunning=${timeRunning}"
+                logDebug "Tuya check-in (0x01)"
             }
             break
         case FIRMWARE_VERSION_ID:
@@ -727,7 +736,7 @@ def toggle() {
     if (isParent()) {
         sendZigbeeCommands(cmdSwitchToggle(indexToChildDni(0)))
     } else {
-        parent?.doActions( parent?.cmdSwitchToggle(device.deviceNetworkId) )
+        parent?.doActions( parent.cmdSwitchToggle(device.deviceNetworkId))
     }
 }
 
@@ -748,20 +757,50 @@ def setLevel(level, duration=0) {
 
 // sends Zigbee commands to ping the device
 def ping() {
+    ArrayList<String> cmds
     getDW().scheduleCommandTimeoutCheck()
-    this.state.lastTx["pingTime"] = new Date().getTime()
-         ArrayList<String> cmds = cmdPing(this.device.deviceNetworkId)
-        sendZigbeeCommands(cmds)   
-    /*
-    if (isParent()) {
-        logDebug "ping: (cmd) parent ${indexToChildDni(0)}"
-        ArrayList<String> cmds = cmdPing(indexToChildDni(0))
-        sendZigbeeCommands(cmds)
-    } else {
-        logDebug "ping: (doActions) child ${device.deviceNetworkId}"
-        parent.doActions( parent.cmdPing(device.deviceNetworkId) )
+    // temporary disable it            getDW().scheduleCommandTimeoutCheck()
+    if (state.lastTx == null) { state.lastTx = [:] }
+    def now = new Date().getTime()
+   
+    log.warn "isParent() = ${isParent()}   isChild() = ${isChild()}"
+    if (isParent())
+    {
+        // parent device
+        state.lastTx["pingTime"] = now
+        state.lastTx["cmdTime"] = now
+        cmds =  ["he rattr 0x${device.deviceNetworkId} 0x${device.endpointId} 0x0000 0x0001 {}", "delay 200",] 
+        logDebug "ping parent: pingTime = ${state.lastTx}"
     }
-*/
+    else {
+        // child device
+        ParentDeviceWrapper pp = getParent()
+        state.lastTx["pingTime"] = now
+        state.lastTx["cmdTime"] = now
+        // set parent device states also
+        parent.setPingTime(now)
+        parent.setCmdTime(now)
+        cmds =  ["he rattr 0x${pp.device.deviceNetworkId} 0x${pp.device.endpointId} 0x0000 0x0001 {}", "delay 200",] 
+        logDebug "ping child: pingTime = ${state.lastTx}"        
+        
+    }
+    sendZigbeeCommands(cmds)
+}
+
+void setPingTime(val){
+    state.lastTx["pingTime"] = val
+}
+void setCmdTime(val){
+    state.lastTx["cmdTime"] = val
+}
+
+
+// TODO - not working!
+void setState(st, index, val) {
+    log.trace "setState ($st, $index, $val)"
+    def str = "$st[\"$index\"]"
+    log.warn "str=${str}"
+    state.$str = val 
 }
 
 
@@ -799,19 +838,13 @@ def cmdRefresh(String childDni) {
 // returns Zigbee commands to togle the switch
 def cmdSwitchToggle(String childDni) {
     def endpointId = childDniToEndpointId(childDni)
-    if (isTS0601() || isGirier()) {
-        if (device.currentState('switch', true).value == 'on') {
-            return cmdSwitch(childDni, 0)
-        }
-        else {
-            return cmdSwitch(childDni, 1)
-        }
+    def child = getChildByEndpointId(endpointId)
+    String currentState = child.device.currentState('switch', true).value
+    if (currentState == 'on') {
+        return cmdSwitch(childDni, 0) + cmdRefresh(childDni)
     }
     else {
-        return [
-            "he cmd 0x${device.deviceNetworkId} 0x${endpointId} 0x0006 2 {}",
-            "delay 500"
-        ] + cmdRefresh(childDni)
+        return cmdSwitch(childDni, 1) + cmdRefresh(childDni)
     }
 }
 
@@ -896,13 +929,6 @@ def cmdSetLevel(String childDni, value, duration) {
     return cmdTS011
 }
 
-// returns Zigbee commands to ping the device
-def cmdPing(String childDni) {
-    def endpointId = this.state.destinationEP
-    this.state.lastTx["cmdTime"] = new Date().getTime()
-    logDebug "cmdPing: (childDni=${childDni} endpointId=${endpointId})  isParent()=${isParent()}"
-    return ["he rattr 0x${device.deviceNetworkId} 0x${endpointId} 0x0000 0x0001 {}", "delay 200",]
-}
 
 
 
@@ -1265,6 +1291,10 @@ def getChildEndpointIds() {
     }
 }
 
+private String getChildId(childDevice) {
+    return childDevice.deviceNetworkId.substring(childDevice.deviceNetworkId.length() - 2)
+}
+
 /*
 -----------------------------------------------------------------------------
 Child only helper functions
@@ -1278,8 +1308,6 @@ def getDni() {
 def isAutoOn() {
     return settings.autoOn
 }
-
-
 
 def levelToValue(BigDecimal level) {
     return levelToValue(level.toInteger())
@@ -1920,15 +1948,40 @@ def testRefresh() {
     sendZigbeeCommands(cmds)
 }
 
-def testX( var ) {
-    
-def parentDeviceId = parent?.deviceNetworkId.split("-")[0]
-if (parentDeviceId) {
-    log.debug "Parent device DNI: ${parentDeviceId}"
-} else {
-    log.debug "No parent device found."
+def getParentDNI() {
+    if (isParent()) {
+        logTrace "Parent device DNI: ${device.deviceNetworkId}"
+        return device.deviceNetworkId
+    }
+    else {
+        def parentDeviceId = parent?.deviceNetworkId?.split("-")[0]
+        if (parentDeviceId) {
+            logTrace "Parent device DNI: ${parentDeviceId}"
+            return parentDeviceId
+        } 
+        else {
+            logWarn "No parent device found."
+            return null
+        }
+    }
 }
 
+def setState( st, val )
+{
+    log.trace "setState ($st, $val)"
+    state."$st" = val
+}
+
+def testX( var ) {
+    /*
+    def cd = getChildDevices()
+    log.warn "cd=${cd}"
+        cd.each { child ->
+            child.setState("test", "test")
+            logTrace "child=${child}    child.getState() = ${child.getState()}"
+        } 
+    */
+    parent.setState("parentState", "parentTest")
 
 }
 
