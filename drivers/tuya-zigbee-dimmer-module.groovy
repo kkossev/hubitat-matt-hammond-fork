@@ -62,10 +62,9 @@ ver 0.4.6  2023/06/11 kkossev      - child devices creation critical bug fix.
 ver 0.5.0  2023/06/14 kkossev      - added trace logging; fixed healthStatus offline for TS0601 and Lonsonho 2nd gang; temporary disabled the initialize() command; changed _TZ3210_ngqk6jia to Lonsonho TS011E group; fixed TS0601 1st gang not working
 ver 0.5.1  2023/06/15 kkossev      - added TS110E _TZ3210_3mpwqzuu 2 gang; fixed minLevel bug scaling; added RTT measurement in the ping command; added rxCtr, txCtr, switchCtr, leveCtr; _TZ3210_4ubylghk inClusters correction; TS110E_LONSONHO_DIMMER group model bug fix;
 ver 0.5.2  2023/06/19 kkossev      - added digital/physical; checkDriverVersion fix; _TZ3210_ngqk6jia ping fix;
-ver 0.6.0  2023/07/30 kkossev      - (dev. branch) child devices ping() and toggle() fixes; 
+ver 0.6.0  2023/07/30 kkossev      - (dev. branch) child devices ping(), toggle(), physical/digital, healthStatus offline bug fixes; 
 *
-*                                   TODO: Lonsonho _TZ3210_4ubylghk : physical/digital not working for child devices; refresh not working; parse: unsupported attribute 4002; 
-*                                   TODO: Lonsonho _TZ3210_pagajpog : healthStatus offline bug!
+*                                   TODO: Lonsonho _TZ3210_4ubylghk : refresh not working; parse: unsupported attribute 4002; 
 *                                   TODO: clearStats toggle in Preferences
 *                                   TODO: Lonsonho _TZ3210_pagajpog : when momentarily push switch 1. It is like it doesn't recognize it as pressing the switch, but pressing it again can cause it to go into pairing mode. @user3633
 *                                   TODO: Girier _TZ3210_3mpwqzuu: physical switch not reflected in the driver @user5386
@@ -81,7 +80,7 @@ ver 0.6.0  2023/07/30 kkossev      - (dev. branch) child devices ping() and togg
 */
 
 def version() { "0.6.0" }
-def timeStamp() {"2023/07/30 9:49 PM"}
+def timeStamp() {"2023/07/30 10:16 PM"}
 
 @Field static final Boolean _DEBUG = false
 
@@ -712,6 +711,7 @@ def refresh() {
 // sends Zigbee commands to turn the switch on
 def on() {
     getDW().scheduleCommandTimeoutCheck()
+    setCmdTimeNow()
     if (isParent()) {
         sendZigbeeCommands(cmdSwitch(indexToChildDni(0), 1))
     } else {
@@ -721,6 +721,7 @@ def on() {
 
 // sends Zigbee commands to turn the switch off
 def off() {
+    setCmdTimeNow()
     getDW().scheduleCommandTimeoutCheck()
     if (isParent()) {
         sendZigbeeCommands(cmdSwitch(indexToChildDni(0), 0))
@@ -731,6 +732,7 @@ def off() {
 
 // sends Zigbee commands to toggle the switch
 def toggle() {
+    setCmdTimeNow()
     getDW().scheduleCommandTimeoutCheck()
     logTrace "toggle: ... getParent()=${getParent()}"
     if (isParent()) {
@@ -742,6 +744,7 @@ def toggle() {
 
 // sends Zigbee commands to set level
 def setLevel(level, duration=0) {
+    setCmdTimeNow()
     getDW().scheduleCommandTimeoutCheck()
     if (settings.autoRefresh == true) {
         runIn(1, 'refresh')
@@ -768,7 +771,6 @@ def ping() {
     {
         // parent device
         state.lastTx["pingTime"] = now
-        state.lastTx["cmdTime"] = now
         cmds =  ["he rattr 0x${device.deviceNetworkId} 0x${device.endpointId} 0x0000 0x0001 {}", "delay 200",] 
         logDebug "ping parent: pingTime = ${state.lastTx}"
     }
@@ -776,7 +778,6 @@ def ping() {
         // child device
         ParentDeviceWrapper pp = getParent()
         state.lastTx["pingTime"] = now
-        state.lastTx["cmdTime"] = now
         // set parent device states also
         parent.setPingTime(now)
         parent.setCmdTime(now)
@@ -784,16 +785,25 @@ def ping() {
         logDebug "ping child: pingTime = ${state.lastTx}"        
         
     }
+    setCmdTimeNow()
     sendZigbeeCommands(cmds)
 }
 
 void setPingTime(val){
     state.lastTx["pingTime"] = val
 }
+
 void setCmdTime(val){
     state.lastTx["cmdTime"] = val
 }
 
+void setCmdTimeNow(){
+    def now = new Date().getTime()
+    state.lastTx["cmdTime"] = now
+    if (isChild()) {
+        parent.setCmdTime(now)
+    }
+}
 
 // TODO - not working!
 void setState(st, index, val) {
@@ -815,8 +825,7 @@ Hub Action (cmd) generators - only return ArrayList<String> Zigbee commands to t
 def cmdRefresh(String childDni) {
     def endpointId = childDniToEndpointId(childDni)
     logDebug "cmdRefresh: (childDni=${childDni} endpointId=${endpointId})  isParent()=${isParent()}"
-    state.lastTx["cmdTime"] = new Date().getTime()
-
+    setCmdTimeNow()
     if (isLonsonho() || isTuyaBulb()) {
         return [
             "he rattr 0x${device.deviceNetworkId} 0x${endpointId} 0x0006 0 {}",
@@ -853,7 +862,7 @@ def cmdSwitch(String childDni, onOff) {
     ArrayList<String> cmds = []
     def endpointId = childDniToEndpointId(childDni)
     logTrace "cmdSwitch: childDni=${childDni} onOff=${onOff} endpointId=${endpointId}"
-    state.lastTx["cmdTime"] = new Date().getTime()
+    setCmdTimeNow()
     onOff = onOff ? "1" : "0"
     
     if (isTS0601()) {
@@ -879,7 +888,7 @@ def cmdSetLevel(String childDni, value, duration) {
     duration = (duration * 10).toInteger()
     def child = getChildByEndpointId(endpointId)
     logTrace "cmdSetLevel: child=${child} childDni=${childDni} value=${value} duration=${duration}"
-    state.lastTx["cmdTime"] = new Date().getTime()
+    setCmdTimeNow()
     ArrayList<String> cmdsTuya = []
     ArrayList<String> cmdTS011 = []
     
@@ -1182,6 +1191,7 @@ private randomPacketId() {
 
 String getEventType()
 {
+    if (state.lastTx == null) state.lastTx = [:]
     def timeElapsed = now().toInteger() - (state.lastTx["cmdTime"] ?: '0').toInteger()
     return (timeElapsed <= MAX_PING_MILISECONDS) ? "digital" : "physical"
 }
