@@ -79,7 +79,7 @@ ver 0.6.1  2023/08/23 kkossev      - (dev. branch) bugfix: _TZE200_e3oitdyu mode
 */
 
 def version() { "0.6.1" }
-def timeStamp() {"2023/08/23 4:52 PM"}
+def timeStamp() {"2023/08/23 6:24 PM"}
 
 @Field static final Boolean _DEBUG = false
 
@@ -316,7 +316,7 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
                 [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_fjjbhx9d", deviceJoinName: "Moes Zigbee 2-Gang Dimmer module"],        // https://community.hubitat.com/t/tuya-moes-1-2-3-gang-dimmer/104596/5?u=kkossev 
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_drs6j6m5", deviceJoinName: "Lifud Model LF-AAZ030-0750-42"],            // https://community.hubitat.com/t/tuya-moes-1-2-3-gang-dimmer/104596/25?u=kkossev
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_3p5ydos3", deviceJoinName: "BSEED Zigbee 1-Gang Dimmer module"],        // not tested
-                [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS110E", manufacturer:"_TZE200_e3oitdyu", deviceJoinName: "Moes ZigBee Dimmer Switch 2CH"]                  // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
+                [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_e3oitdyu", deviceJoinName: "Moes ZigBee Dimmer Switch 2CH"]                  // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
                 
             ],
             deviceJoinName: "TS0601 Tuya Dimmer",
