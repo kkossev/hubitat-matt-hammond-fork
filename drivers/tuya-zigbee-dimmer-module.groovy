@@ -63,7 +63,7 @@ ver 0.5.0  2023/06/14 kkossev      - added trace logging; fixed healthStatus off
 ver 0.5.1  2023/06/15 kkossev      - added TS110E _TZ3210_3mpwqzuu 2 gang; fixed minLevel bug scaling; added RTT measurement in the ping command; added rxCtr, txCtr, switchCtr, leveCtr; _TZ3210_4ubylghk inClusters correction; TS110E_LONSONHO_DIMMER group model bug fix;
 ver 0.5.2  2023/06/19 kkossev      - added digital/physical; checkDriverVersion fix; _TZ3210_ngqk6jia ping fix;
 ver 0.6.0  2023/07/30 kkossev      - child devices ping(), toggle(), physical/digital, healthStatus offline bug fixes; added [refresh] event info;
-ver 0.6.1  2023/08/23 kkossev      - (dev. branch) bugfix: _TZE200_e3oitdyu model changed to TS0601;
+ver 0.6.1  2023/08/23 kkossev      - (dev. branch) bugfix: _TZE200_e3oitdyu model changed to TS0601; initialize button re-enabled (loads all defaults!)
 *
 *                                   TODO: Lonsonho _TZ3210_4ubylghk : bulb type :  https://github.com/zigpy/zha-device-handlers/issues/1415#issuecomment-1062843118
 *                                   TODO: Lonsonho _TZ3210_pagajpog : when momentarily push switch 1. It is like it doesn't recognize it as pressing the switch, but pressing it again can cause it to go into pairing mode. @user3633
@@ -79,7 +79,7 @@ ver 0.6.1  2023/08/23 kkossev      - (dev. branch) bugfix: _TZE200_e3oitdyu mode
 */
 
 def version() { "0.6.1" }
-def timeStamp() {"2023/08/23 6:24 PM"}
+def timeStamp() {"2023/08/23 7:31 PM"}
 
 @Field static final Boolean _DEBUG = false
 
@@ -111,7 +111,7 @@ metadata {
         attribute "rtt", "number" 
         
         command "toggle"
-        //command "initialize", [[name: "Initialize the sensor after switching drivers.  \n\r   ***** Will load device default values! *****" ]]
+        command "initialize", [[name: "Initialize the sensor after switching drivers.  \n\r   ***** Will load device default values! *****" ]]
         
         if (_DEBUG == true) {
             command "init"
@@ -1453,9 +1453,64 @@ def configure() {
     updated()
 }
 
+void getAllProperties() {
+    log.trace 'Properties:'    
+    device.properties.each { it->
+        log.debug it
+    }
+    log.trace 'Settings:'    
+    settings.each { it->
+        log.debug "${it.key} =  ${it.value}"    // https://community.hubitat.com/t/how-do-i-get-the-datatype-for-an-app-setting/104228/6?u=kkossev
+    }    
+    log.trace 'Done'    
+}
+
+// delete all Preferences
+void deleteAllSettings() {
+    settings.each { it->
+        log.debug "deleting ${it.key}"
+        //this.removeSetting("${it.key}")
+        device.removeSetting("${it.key}")
+    }
+    logInfo  "All settings (preferences) DELETED"
+}
+
+// delete all attributes
+void deleteAllCurrentStates() {
+    device.properties.supportedAttributes.each { it->
+        log.debug "deleting $it"
+        device.deleteCurrentState("$it")
+    }
+    logInfo "All current states (attributes) DELETED"
+}
+
+// delete all State Variables
+void deleteAllStates() {
+    state.each { it->
+        log.debug "deleting state ${it.key}"
+    }
+    state.clear()
+    logInfo "All States DELETED"
+}
+
+void deleteAllScheduledJobs() {
+    unschedule()
+    logInfo "All scheduled jobs DELETED"
+}
+
+
+def loadAllDefaults() {
+    logWarn "loadAllDefaults() !!!"
+    deleteAllSettings()
+    deleteAllCurrentStates()
+    deleteAllScheduledJobs()
+    deleteAllStates()
+}
+
 // called on hub startup if driver specifies capability "Initialize" (otherwise is not required or automatically called if present)
 def initialize() {
     log.info "<b>initialize()</b> ... ${getDeviceInfo()}"
+    loadAllDefaults()
     initializeVars( fullInit = true )
     // TuyaBlackMagic + create child devices
     initialized()
