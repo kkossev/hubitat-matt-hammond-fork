@@ -63,7 +63,7 @@ ver 0.5.0  2023/06/14 kkossev      - added trace logging; fixed healthStatus off
 ver 0.5.1  2023/06/15 kkossev      - added TS110E _TZ3210_3mpwqzuu 2 gang; fixed minLevel bug scaling; added RTT measurement in the ping command; added rxCtr, txCtr, switchCtr, leveCtr; _TZ3210_4ubylghk inClusters correction; TS110E_LONSONHO_DIMMER group model bug fix;
 ver 0.5.2  2023/06/19 kkossev      - added digital/physical; checkDriverVersion fix; _TZ3210_ngqk6jia ping fix;
 ver 0.6.0  2023/07/30 kkossev      - child devices ping(), toggle(), physical/digital, healthStatus offline bug fixes; added [refresh] event info;
-ver 0.6.1  2023/08/23 kkossev      - (dev. branch) bugfix: _TZE200_e3oitdyu model changed to TS0601; initialize button re-enabled (loads all defaults!)
+ver 0.6.1  2023/08/23 kkossev      - (dev. branch) bugfix: _TZE200_e3oitdyu model changed to TS0601; initialize button re-enabled (loads all defaults!); cmdTime state secured;
 *
 *                                   TODO: Lonsonho _TZ3210_4ubylghk : bulb type :  https://github.com/zigpy/zha-device-handlers/issues/1415#issuecomment-1062843118
 *                                   TODO: Lonsonho _TZ3210_pagajpog : when momentarily push switch 1. It is like it doesn't recognize it as pressing the switch, but pressing it again can cause it to go into pairing mode. @user3633
@@ -79,7 +79,7 @@ ver 0.6.1  2023/08/23 kkossev      - (dev. branch) bugfix: _TZE200_e3oitdyu mode
 */
 
 def version() { "0.6.1" }
-def timeStamp() {"2023/08/23 7:31 PM"}
+def timeStamp() {"2023/08/23 7:45 PM"}
 
 @Field static final Boolean _DEBUG = false
 
@@ -808,6 +808,7 @@ void setCmdTime(val){
 
 void setCmdTimeNow(){
     def now = new Date().getTime()
+    if (state.lastTx == null) { state.lastTx = [:] }
     state.lastTx["cmdTime"] = now
     if (isChild()) {
         parent.setCmdTime(now)
