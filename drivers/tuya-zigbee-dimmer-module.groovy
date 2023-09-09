@@ -65,6 +65,7 @@ ver 0.5.2  2023/06/19 kkossev      - added digital/physical; checkDriverVersion 
 ver 0.6.0  2023/07/30 kkossev      - child devices ping(), toggle(), physical/digital, healthStatus offline bug fixes; added [refresh] event info;
 ver 0.6.1  2023/08/23 kkossev      - bugfix: _TZE200_e3oitdyu model changed to TS0601; initialize button re-enabled (loads all defaults!); cmdTime state secured;
 ver 0.6.2  2023/09/09 kkossev      - added TS0601 _TZE204_zenj4lxv Moes ZigBee 2-Gang Dimmer; _TZE204_1v1dxkck (3-gang); _TZE204_hlx9tnzb (1-gang); stopping dimmer countdowns;
+ver 0.6.3  2023/09/09 kkossev      - (dev. branch) decoding ledMode, powerOnMode lightType for TS0601 dimmers
 *
 *                                   TODO: LED configuration settings
 *                                   TODO: Lonsonho _TZ3210_4ubylghk : bulb type :  https://github.com/zigpy/zha-device-handlers/issues/1415#issuecomment-1062843118
@@ -80,8 +81,8 @@ ver 0.6.2  2023/09/09 kkossev      - added TS0601 _TZE204_zenj4lxv Moes ZigBee 2
 *
 */
 
-def version() { "0.6.2" }
-def timeStamp() {"2023/09/09 4:06 PM"}
+def version() { "0.6.3" }
+def timeStamp() {"2023/09/09 5:24 PM"}
 
 @Field static final Boolean _DEBUG = false
 
@@ -111,7 +112,10 @@ metadata {
         
         attribute 'healthStatus', 'enum', [ 'unknown', 'offline', 'online' ]
         attribute "rtt", "number" 
-        
+        attribute 'ledMode',     'enum', TS0601LEDOptions.options.values() as List<String>
+        attribute 'powerOnMode', 'enum', TS0601PowerOnOptions.options.values() as List<String>
+        attribute 'lightType',   'enum', TS110ELightTypeOptions.options.values() as List<String>
+
         command "toggle"
         command "initialize", [[name: "Initialize the sensor after switching drivers.  \n\r   ***** Will load device default values! *****" ]]
         
@@ -155,6 +159,11 @@ metadata {
             input name: 'switchType', type: 'enum', title: '<b>Switch Type</b>', options: TS110ESwitchTypeOptions.options, defaultValue: TS110ESwitchTypeOptions.defaultValue, description: '<i>Configures the switch type.</i>'
         }
         */    
+        if (isTS0601())  {
+            input name: 'ledMode', type: 'enum', title: '<b>LED mode</b>', options: TS0601LEDOptions.options, description: '<i>Configures the LED mode.</i>'
+            input name: 'powerOnMode', type: 'enum', title: '<b>Power-On mode</b>', options: TS0601PowerOnOptions.options, description: '<i>Configures the Power-On mode.</i>'
+            input name: 'lightType', type: 'enum', title: '<b>Light type</b>', options: TS110ELightTypeOptions.options, description: '<i>Configures the light type.</i>'
+        }
 
         input (name: "advancedOptions", type: "bool", title: "Advanced Options", description: "<i> </i>", defaultValue: false)
         if (advancedOptions == true) {
@@ -192,11 +201,20 @@ metadata {
     defaultValue: 0,
     options     : [0: 'led', 1: 'incandescent', 2: 'halogen']
 ]
+
+@Field static final Map TS0601LEDOptions = [            // ledMode - Moes Dimmers
+    defaultValue: 0,
+    options     : [0: 'always off', 1: 'lit when on', 2: 'lit when off']
+]
+@Field static final Map TS0601PowerOnOptions = [            // ledMode - Moes Dimmers
+    defaultValue: 0,
+    options     : [0: 'off', 1: 'on', 2: 'last state']
+]
+
+
 @Field static final int TS110E_MIN_BRIGHTNESS = 0xFC03        // (64515)       // TODO: 0, 1000 -> 1, 255,  type: 0x21 Check !!!   
 @Field static final int TS110E_MAX_BRIGHTNESS = 0xFC04        // (64516)       // TODO: 0, 1000 -> 1, 255,  type: 0x21 -  Check !!!   
 // Girier TS110E may not support power-on-behavour?  https://github.com/Koenkk/zigbee2mqtt/issues/15902#issuecomment-1382848150     https://github.com/Koenkk/zigbee2mqtt/issues/16804 
-
-
 
 
 @Field static def modelConfigs = [
@@ -1052,7 +1070,12 @@ def parseTuyaCluster( descMap ) {
             if (isFanController()) {
                 handleTuyaClusterBrightnessCmd(cmd, value as int)
             } else {
-                logDebug "parseTuyaCluster: received: Tuya type of light source cmd=${cmd} value=${value}"    // (LED, halogen, incandescent)
+                //logDebug "parseTuyaCluster: received: Tuya type of light source cmd=${cmd} value=${value}"    // (LED, halogen, incandescent)
+                String modeName = TS110ELightTypeOptions.options[value as int]
+                String description = "Light type is $modeName"
+                device.updateSetting('lightType', [value: value.toString(), type: 'enum'])
+                sendEvent(name:'lightType', value: modeName, descriptionText: description, type: 'physical')
+                logInfo "$description"
             }
             break
         case "0A" : // (10)    // TS0601 Moes dimmer
@@ -1062,13 +1085,22 @@ def parseTuyaCluster( descMap ) {
             logDebug "parseTuyaCluster: Unknown Tuya dp= ${cmd} fn=${value}"
             break
         case "0E" : // (14)
-            logInfo "Power-on Status Setting is ${value}"
+            //logInfo "Power-on Status Setting is ${value}"
+            String modeName = TS0601PowerOnOptions.options[value as int]
+            String description = "Power-On mode is $modeName"
+            device.updateSetting('powerOnMode', [value: value.toString(), type: 'enum'])
+            sendEvent(name:'powerOnMode', value: modeName, descriptionText: description, type: 'physical')
+            logInfo "$description"
             break
         case "12" : // (18)
             logDebug "parseTuyaCluster: Unknown Tuya dp= ${cmd} fn=${value}"
             break
         case "15" : // (21)
-            logInfo "Light Mode is ${value}"
+            String modeName = TS0601LEDOptions.options[value as int]
+            String description = "LED mode is $modeName"
+            device.updateSetting('ledMode', [value: value.toString(), type: 'enum'])
+            sendEvent(name:'ledMode', value: modeName, descriptionText: description, type: 'physical')
+            logInfo "$description"
             break
         case "1A" : // (26)
             logInfo "Switch backlight ${value}"
@@ -1599,7 +1631,9 @@ void initializeVars( boolean fullInit = false ) {
     if (fullInit == true || settings?.minLevel == null) device.updateSetting("minLevel", [value:DEFAULT_MIN_LEVEL, type:"number"]) 
     if (fullInit == true || settings?.maxLevel == null) device.updateSetting("maxLevel", [value:DEFAULT_MAX_LEVEL, type:"number"]) 
     if (fullInit == true || settings?.healthCheckInterval == null) device.updateSetting('healthCheckInterval', [value: HealthcheckIntervalOpts.defaultValue.toString(), type: 'enum'])
-    //if (fullInit == true)  { device.updateSetting('lightType', [value: null, type: 'enum'])}     //  no lightType by default!  TS110ELightTypeOptions.options[value]
+    if (fullInit == true)  { device.updateSetting('ledMode', [value: null, type: 'enum'])}           //  no ledMode by default!
+    if (fullInit == true)  { device.updateSetting('powerOnMode', [value: null, type: 'enum'])}       //  no powerOnMode by default!
+    if (fullInit == true)  { device.updateSetting('lightType', [value: null, type: 'enum'])}         //  no lightType by default!
 }
 
 // will be called when user selects Save Preferences
