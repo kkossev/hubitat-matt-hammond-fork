@@ -64,8 +64,9 @@ ver 0.5.1  2023/06/15 kkossev      - added TS110E _TZ3210_3mpwqzuu 2 gang; fixed
 ver 0.5.2  2023/06/19 kkossev      - added digital/physical; checkDriverVersion fix; _TZ3210_ngqk6jia ping fix;
 ver 0.6.0  2023/07/30 kkossev      - child devices ping(), toggle(), physical/digital, healthStatus offline bug fixes; added [refresh] event info;
 ver 0.6.1  2023/08/23 kkossev      - bugfix: _TZE200_e3oitdyu model changed to TS0601; initialize button re-enabled (loads all defaults!); cmdTime state secured;
-ver 0.6.2  2023/09/09 kkossev      - added TS0601 _TZE204_zenj4lxv Moes ZigBee 2-Gang Dimmer; _TZE204_1v1dxkck (3-gang); _TZE204_hlx9tnzb (1-gang)
+ver 0.6.2  2023/09/09 kkossev      - added TS0601 _TZE204_zenj4lxv Moes ZigBee 2-Gang Dimmer; _TZE204_1v1dxkck (3-gang); _TZE204_hlx9tnzb (1-gang); stopping dimmer countdowns;
 *
+*                                   TODO: LED configuration settings
 *                                   TODO: Lonsonho _TZ3210_4ubylghk : bulb type :  https://github.com/zigpy/zha-device-handlers/issues/1415#issuecomment-1062843118
 *                                   TODO: Lonsonho _TZ3210_pagajpog : when momentarily push switch 1. It is like it doesn't recognize it as pressing the switch, but pressing it again can cause it to go into pairing mode. @user3633
 *                                   TODO: Girier _TZ3210_3mpwqzuu: physical switch not reflected in the driver @user5386
@@ -80,7 +81,7 @@ ver 0.6.2  2023/09/09 kkossev      - added TS0601 _TZE204_zenj4lxv Moes ZigBee 2
 */
 
 def version() { "0.6.2" }
-def timeStamp() {"2023/09/09 3:09 PM"}
+def timeStamp() {"2023/09/09 4:06 PM"}
 
 @Field static final Boolean _DEBUG = false
 
@@ -1043,6 +1044,9 @@ def parseTuyaCluster( descMap ) {
         case "14" : // Countdown3
             def switchNumber = cmd == "06" ? "01" : cmd == "0C" ? "02" : cmd == "14" ? "03" : null
             logDebug "Countdown ${switchNumber} is ${value}s"
+            if (value != 0 ) {
+                stopCountdown(cmd, value)
+            }
             break
         case "04" : // (04) level for _TZE200_fvldku9h ;  Tuya type of light source for all others?
             if (isFanController()) {
@@ -1080,6 +1084,13 @@ def parseTuyaCluster( descMap ) {
             break
     }
 }
+
+void stopCountdown(cmd, value) {
+    logWarn "stopping Countdown cmd=${cmd} value=${value}"
+    def dpValHex  = zigbee.convertToHexString(0, 8) 
+    sendZigbeeCommands(sendTuyaCommand(cmd, DP_TYPE_VALUE, dpValHex))
+}
+
 
 def parseBasicCluster( descMap ) {
     switch (descMap.attrId) {
