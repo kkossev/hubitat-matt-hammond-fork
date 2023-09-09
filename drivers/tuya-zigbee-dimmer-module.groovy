@@ -64,6 +64,7 @@ ver 0.5.1  2023/06/15 kkossev      - added TS110E _TZ3210_3mpwqzuu 2 gang; fixed
 ver 0.5.2  2023/06/19 kkossev      - added digital/physical; checkDriverVersion fix; _TZ3210_ngqk6jia ping fix;
 ver 0.6.0  2023/07/30 kkossev      - child devices ping(), toggle(), physical/digital, healthStatus offline bug fixes; added [refresh] event info;
 ver 0.6.1  2023/08/23 kkossev      - bugfix: _TZE200_e3oitdyu model changed to TS0601; initialize button re-enabled (loads all defaults!); cmdTime state secured;
+ver 0.6.2  2023/09/09 kkossev      - added TS0601 _TZE204_zenj4lxv Moes ZigBee 2-Gang Dimmer; _TZE204_1v1dxkck (3-gang); _TZE204_hlx9tnzb (1-gang)
 *
 *                                   TODO: Lonsonho _TZ3210_4ubylghk : bulb type :  https://github.com/zigpy/zha-device-handlers/issues/1415#issuecomment-1062843118
 *                                   TODO: Lonsonho _TZ3210_pagajpog : when momentarily push switch 1. It is like it doesn't recognize it as pressing the switch, but pressing it again can cause it to go into pairing mode. @user3633
@@ -78,8 +79,8 @@ ver 0.6.1  2023/08/23 kkossev      - bugfix: _TZE200_e3oitdyu model changed to T
 *
 */
 
-def version() { "0.6.1" }
-def timeStamp() {"2023/08/23 7:45 PM"}
+def version() { "0.6.2" }
+def timeStamp() {"2023/09/09 3:09 PM"}
 
 @Field static final Boolean _DEBUG = false
 
@@ -229,9 +230,11 @@ metadata {
     "_TZ3210_pagajpog": [ numEps: 2, model: "TS110E", inClusters: "0005,0004,0006,0008,E001,0000", joinName: "Lonsonho Tuya Smart Zigbee Dimmer"],                 // https://community.hubitat.com/t/release-tuya-lonsonho-1-gang-and-2-gang-zigbee-dimmer-module-driver/60372/76?u=kkossev
     "_TZ3210_4ubylghk": [ numEps: 2, model: "TS110E", inClusters: "0004,0005,0006,0008,0300,EF00,0000", joinName: "Lonsonho Tuya Smart Zigbee Dimmer"],            // https://community.hubitat.com/t/driver-support-for-tuya-dimmer-module-model-ts110e-manufacturer-tz3210-4ubylghk/116077?u=kkossev
     "_TZ3210_ngqk6jia": [ numEps: 1, model: "TS110E", inClusters: "0003,0005,0004,0006,0008,E001,1000,0000", joinName: "Lonsonho Smart Zigbee Dimmer"],            // KK
-    "_TZ3210_3mpwqzuu": [ numEps: 2, model: "TS110E", inClusters: "0005,0004,0006,0008,E001,0000", joinName: "Tuya Smart Zigbee Dimmer"]                           // https://community.hubitat.com/t/driver-support-for-tuya-dimmer-module-model-ts110e-manufacturer-tz3210-4ubylghk/116077/26?u=kkossev
+    "_TZ3210_3mpwqzuu": [ numEps: 2, model: "TS110E", inClusters: "0005,0004,0006,0008,E001,0000", joinName: "Tuya Smart Zigbee Dimmer"],                          // https://community.hubitat.com/t/driver-support-for-tuya-dimmer-module-model-ts110e-manufacturer-tz3210-4ubylghk/116077/26?u=kkossev
+    "_TZE204_hlx9tnzb": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Moes Zigbee 1-Gang Switch Dimmer"],                            // 
+    "_TZE204_zenj4lxv": [ numEps: 2, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Moes Zigbee 2-Gang Switch Dimmer"],                            // https://www.aliexpress.com/item/1005005870551288.html 
+    "_TZE204_1v1dxkck": [ numEps: 3, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Moes Zigbee 3-Gang Switch Dimmer"]                             // 
     
-
 ]
 
 def getNumEps() {return config()?.numEps ?: 1}
@@ -314,10 +317,12 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_la2c2uo9", deviceJoinName: "Moes Zigbee 1-Gang Dimmer module"],        // not tested
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_579lguh2", deviceJoinName: "Moes Zigbee 1-Gang Dimmer module"],        // not tested
                 [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_fjjbhx9d", deviceJoinName: "Moes Zigbee 2-Gang Dimmer module"],        // https://community.hubitat.com/t/tuya-moes-1-2-3-gang-dimmer/104596/5?u=kkossev 
-                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_drs6j6m5", deviceJoinName: "Lifud Model LF-AAZ030-0750-42"],            // https://community.hubitat.com/t/tuya-moes-1-2-3-gang-dimmer/104596/25?u=kkossev
-                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_3p5ydos3", deviceJoinName: "BSEED Zigbee 1-Gang Dimmer module"],        // not tested
-                [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_e3oitdyu", deviceJoinName: "Moes ZigBee Dimmer Switch 2CH"]                  // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
-                
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_drs6j6m5", deviceJoinName: "Lifud Model LF-AAZ030-0750-42"],           // https://community.hubitat.com/t/tuya-moes-1-2-3-gang-dimmer/104596/25?u=kkossev
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_3p5ydos3", deviceJoinName: "BSEED Zigbee 1-Gang Dimmer module"],       // not tested
+                [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_e3oitdyu", deviceJoinName: "Moes ZigBee Dimmer Switch 2CH"],           // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_hlx9tnzb", deviceJoinName: "Moes ZigBee 1-Gang Dimmer"],               // https://github.com/Koenkk/zigbee-herdsman-converters/blob/23bee5ddfca1f62fc0a03d40fbf788b0b7fe2fc3/src/devices/tuya.ts#L1265
+                [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_zenj4lxv", deviceJoinName: "Moes ZigBee 2-Gang Dimmer"],               // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
+                [numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_1v1dxkck", deviceJoinName: "Moes ZigBee 3-Gang Dimmer"]                // https://github.com/Koenkk/zigbee-herdsman-converters/blob/23bee5ddfca1f62fc0a03d40fbf788b0b7fe2fc3/src/devices/tuya.ts#L1265
             ],
             deviceJoinName: "TS0601 Tuya Dimmer",
             capabilities  : ["SwitchLevel": true],
@@ -381,7 +386,7 @@ def isTS110E()             { return getDW().getModelGroup().contains("TS110E_DIM
 def isGirier()             { return getDW().getModelGroup().contains("TS110E_GIRIER_DIMMER") }
 def isLonsonho()           { return getDW().getModelGroup().contains("TS110E_LONSONHO_DIMMER") }
 def isTuyaBulb()           { return getDW().getModelGroup().contains("TS0505B_TUYA_BULB") }
-
+def isUnknown()            { return getDW().getModelGroup().contains("UNKNOWN") }
 
 void parse(String description) {
     checkDriverVersion()
@@ -552,7 +557,7 @@ void parse(String description) {
 void parseBasicCluster(final Map descMap) {
     switch (descMap.attrInt as Integer) {
         case PING_ATTR_ID: // Using 0x01 read as a simple ping/pong mechanism
-            logDebug "Tuya check-in message (attribute ${descMap.attrId} reported: ${descMap.value})"
+            logTrace "Tuya check-in message (attribute ${descMap.attrId} reported: ${descMap.value})"
             def now = new Date().getTime()
             if (this.state.lastTx == null) this.state.lastTx = [:]
             def timeRunning = now.toInteger() - (this.state.lastTx["pingTime"] ?: '0').toInteger()
@@ -569,7 +574,7 @@ void parseBasicCluster(final Map descMap) {
             updateDataValue('softwareBuild', version)
             break
         default:
-            logWarn "zigbee received unknown Basic cluster attribute 0x${descMap.attrId} (value ${descMap.value})"
+            logDebug "zigbee received unknown Basic cluster attribute 0x${descMap.attrId} (value ${descMap.value})"
             break
     }
 }
@@ -669,7 +674,7 @@ Propagate settings changes both ways between Parent and First Child
 
 def onChildSettingsChange(childDni, childSettings) {
     def i = endpointIdToIndex(childDniToEndpointId(childDni))
-    logInfo "updating settings for child device #${i+1} ..."
+    logInfo "updating settings for child device #${i+1} ... ${childSettings}"
     if (i==0) {
         device.updateSetting("minLevel",childSettings.minLevel)
         device.updateSetting("maxLevel",childSettings.maxLevel)
@@ -681,7 +686,7 @@ def onChildSettingsChange(childDni, childSettings) {
 }
 
 def onParentSettingsChange(parentSettings) {
-    logInfo "updating settings for the parent device ..."
+    logInfo "updating settings for the parent device ... ${parentSettings}"
     device.updateSetting("minLevel",parentSettings.minLevel)
     device.updateSetting("maxLevel",parentSettings.maxLevel)
     device.updateSetting("autoOn",parentSettings.autoOn)
@@ -1037,7 +1042,7 @@ def parseTuyaCluster( descMap ) {
         case "0C" : // Countdown2
         case "14" : // Countdown3
             def switchNumber = cmd == "06" ? "01" : cmd == "0C" ? "02" : cmd == "14" ? "03" : null
-            logInfo "Countdown ${switchNumber} is ${value}s"
+            logDebug "Countdown ${switchNumber} is ${value}s"
             break
         case "04" : // (04) level for _TZE200_fvldku9h ;  Tuya type of light source for all others?
             if (isFanController()) {
@@ -1046,7 +1051,10 @@ def parseTuyaCluster( descMap ) {
                 logDebug "parseTuyaCluster: received: Tuya type of light source cmd=${cmd} value=${value}"    // (LED, halogen, incandescent)
             }
             break
-        case "0A" : // (10)
+        case "0A" : // (10)    // TS0601 Moes dimmer
+            logDebug "parseTuyaCluster: Unknown Tuya dp= ${cmd} fn=${value}"
+            break
+        case "0C" : // (12)    // TS0601 Moes dimmer
             logDebug "parseTuyaCluster: Unknown Tuya dp= ${cmd} fn=${value}"
             break
         case "0E" : // (14)
@@ -1060,6 +1068,9 @@ def parseTuyaCluster( descMap ) {
             break
         case "1A" : // (26)
             logInfo "Switch backlight ${value}"
+            break
+        case "28" : // (40)    // TS0601 Moes dimmer
+            logDebug "parseTuyaCluster: Unknown Tuya dp= ${cmd} fn=${value}"
             break
         case "40" : // (64)
             logDebug "parseTuyaCluster: Unknown Tuya dp= ${cmd} fn=${value}"
@@ -1096,7 +1107,7 @@ def handleTuyaClusterSwitchCmd(cmd,value) {
         def isFirst = 0 == endpointIdToIndex(switchNumber)
         child?.onSwitchState(value)
         if (isFirst && child != this) {
-            logDebug "handleTuyaClusterSwitchCmd: Replicating switchState in parent"
+            logTrace "handleTuyaClusterSwitchCmd: Replicating switchState in parent"
             onSwitchState(value)
         }
     }
@@ -1114,7 +1125,7 @@ def handleTuyaClusterBrightnessCmd(cmd, value) {
         def isFirst = 0 == endpointIdToIndex(switchNumber)
         child?.onSwitchLevel(value)
         if (isFirst && child != this) {
-            logDebug "handleTuyaClusterBrightnessCmd: Replicating switchLevel in parent"
+            logTrace "handleTuyaClusterBrightnessCmd: Replicating switchLevel in parent"
             onSwitchLevel(value)
         }
     }
@@ -1252,7 +1263,7 @@ def onSwitchLevel(value) {
     else {
         map.descriptionText = "${device.displayName} level was set to ${map.value} [${map.type}]"
     }         
-    logDebug "onSwitchLevel: Value=${value} level=${level} (value=${value})"
+    logTrace "onSwitchLevel: Value=${value} level=${level} (value=${value})"
     logInfo "${map.descriptionText}"
     //logInfo "was set to ${level}% [${getEventType()}]"
     sendEvent(map)
@@ -1300,7 +1311,7 @@ def childDniToEndpointId(childDni) {
             return match[0][2]
  //       }
     }
-    logWarn "childDniToEndpointId: childDni=${childDni} childDniPattern=${childDniPattern} match[0][1]=${match[0][1]} match[0][2]=${match[0][2]} device.deviceNetworkId=${device.deviceNetworkId} match=${match}" 
+    logTrace "childDniToEndpointId: childDni=${childDni} childDniPattern=${childDniPattern} match[0][1]=${match[0][1]} match[0][2]=${match[0][2]} device.deviceNetworkId=${device.deviceNetworkId} match=${match}" 
     //return null
     match[0][2]
 }
@@ -1411,7 +1422,7 @@ def valueToLevel(Integer value) {
     if (value > maxValue255) value = maxValue255
     
     def reScaled = rescale(value, minValue255, maxValue255, 0, 100)
-    logDebug "valueToLevel: raw value:${value} reScaled=${reScaled} (isParent=${isParent()}, isTS0601=${isTS0601()})"
+    logTrace "valueToLevel: raw value:${value} reScaled=${reScaled} (isParent=${isParent()}, isTS0601=${isTS0601()})"
     return reScaled
 }
 
@@ -1570,10 +1581,10 @@ void initializeVars( boolean fullInit = false ) {
     if (fullInit == true || state.deviceProfile == null) {
         setDeviceNameAndProfile()
     }
-    if (fullInit == true || settings.logEnable == null) device.updateSetting("logEnable", DEFAULT_DEBUG_OPT)
-    if (fullInit == true || settings.traceEnable == null) device.updateSetting("traceEnable", false)
+    if (fullInit == true || settings.logEnable == null) device.updateSetting("logEnable", [value: DEFAULT_DEBUG_OPT, type: 'bool'] )
+    if (fullInit == true || settings.traceEnable == null) device.updateSetting("traceEnable", [value: false, type: 'bool'])
     
-    if (fullInit == true || settings.txtEnable == null) device.updateSetting("txtEnable", true)
+    if (fullInit == true || settings.txtEnable == null) device.updateSetting("txtEnable", [value: true, type: 'bool'])
     if (fullInit == true || settings?.minLevel == null) device.updateSetting("minLevel", [value:DEFAULT_MIN_LEVEL, type:"number"]) 
     if (fullInit == true || settings?.maxLevel == null) device.updateSetting("maxLevel", [value:DEFAULT_MAX_LEVEL, type:"number"]) 
     if (fullInit == true || settings?.healthCheckInterval == null) device.updateSetting('healthCheckInterval', [value: HealthcheckIntervalOpts.defaultValue.toString(), type: 'enum'])
@@ -1601,7 +1612,6 @@ def updated() {
     else {
         logDebug "skipping the health check for a child device"
     }
-
       
     // version 0.3.1
     if (settings?.forcedProfile != null) {
