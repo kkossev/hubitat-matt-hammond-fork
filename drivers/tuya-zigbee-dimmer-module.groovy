@@ -63,6 +63,7 @@ ver 0.5.0  2023/06/14 kkossev      - added trace logging; fixed healthStatus off
 ver 0.5.1  2023/06/15 kkossev      - added TS110E _TZ3210_3mpwqzuu 2 gang; fixed minLevel bug scaling; added RTT measurement in the ping command; added rxCtr, txCtr, switchCtr, leveCtr; _TZ3210_4ubylghk inClusters correction; TS110E_LONSONHO_DIMMER group model bug fix;
 ver 0.5.2  2023/06/19 kkossev      - added digital/physical; checkDriverVersion fix; _TZ3210_ngqk6jia ping fix;
 ver 0.6.0  2023/07/30 kkossev      - child devices ping(), toggle(), physical/digital, healthStatus offline bug fixes; added [refresh] event info;
+ver 0.6.1  2023/08/23 kkossev      - bugfix: _TZE200_e3oitdyu model changed to TS0601; initialize button re-enabled (loads all defaults!); cmdTime state secured;
 *
 *                                   TODO: Lonsonho _TZ3210_4ubylghk : bulb type :  https://github.com/zigpy/zha-device-handlers/issues/1415#issuecomment-1062843118
 *                                   TODO: Lonsonho _TZ3210_pagajpog : when momentarily push switch 1. It is like it doesn't recognize it as pressing the switch, but pressing it again can cause it to go into pairing mode. @user3633
@@ -77,8 +78,8 @@ ver 0.6.0  2023/07/30 kkossev      - child devices ping(), toggle(), physical/di
 *
 */
 
-def version() { "0.6.0" }
-def timeStamp() {"2023/07/30 11:43 PM"}
+def version() { "0.6.1" }
+def timeStamp() {"2023/08/23 7:45 PM"}
 
 @Field static final Boolean _DEBUG = false
 
@@ -110,7 +111,7 @@ metadata {
         attribute "rtt", "number" 
         
         command "toggle"
-        //command "initialize", [[name: "Initialize the sensor after switching drivers.  \n\r   ***** Will load device default values! *****" ]]
+        command "initialize", [[name: "Initialize the sensor after switching drivers.  \n\r   ***** Will load device default values! *****" ]]
         
         if (_DEBUG == true) {
             command "init"
@@ -145,15 +146,14 @@ metadata {
 
         input "maxLevel", "number", title: "<b>Maximum level</b>", description: "<i>Maximum brightness level (%). 100% on the dimmer level is mapped to this.</i>", required: true, multiple: false, defaultValue: DEFAULT_MAX_LEVEL
         if (maxLevel < minLevel) { maxLevel = DEFAULT_MAX_LEVEL } else if (maxLevel > DEFAULT_MAX_LEVEL) { maxLevel = DEFAULT_MAX_LEVEL }
-        /*
-        if (isTS110E()) {
-            input name: 'lightType', type: 'enum', title: '<b>Light Type</b>', options: TS110ELightTypeOptions.options, defaultValue: TS110ELightTypeOptions.defaultValue, description: \
-                '<i>Configures the lights type.</i>'
-            input name: 'switchType', type: 'enum', title: '<b>Switch Type</b>', options: TS110ESwitchTypeOptions.options, defaultValue: TS110ESwitchTypeOptions.defaultValue, description: \
-                '<i>Configures the switch type.</i>'
-            
+
+         /*   
+        if (isLonsonho()) {
+            input name: 'lightType', type: 'enum', title: '<b>Light Type</b>', options: TS110ELightTypeOptions.options, description: '<i>Configures the lights type.</i>'
+            input name: 'switchType', type: 'enum', title: '<b>Switch Type</b>', options: TS110ESwitchTypeOptions.options, defaultValue: TS110ESwitchTypeOptions.defaultValue, description: '<i>Configures the switch type.</i>'
         }
-        */
+        */    
+
         input (name: "advancedOptions", type: "bool", title: "Advanced Options", description: "<i> </i>", defaultValue: false)
         if (advancedOptions == true) {
             input "traceEnable", "bool", title: "<b>Enable trace logging</b>", description: "<i>Even more detailed logging. Toggle it on if asked by the developer...</i>", required: false, defaultValue: false
@@ -223,7 +223,7 @@ metadata {
     "_TZE200_fvldku9h": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "Tuya Fan Switch" ] ,                                  // https://www.aliexpress.com/item/4001242513879.html
     "_TZE200_r32ctezx": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "Tuya Fan Switch" ],                                   // https://www.aliexpress.us/item/3256804518783061.html https://github.com/Koenkk/zigbee2mqtt/issues/12793
     "_TZE200_3p5ydos3": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "BSEED Zigbee Dimmer" ],                               // https://www.bseed.com/collections/zigbee-series/products/bseed-eu-russia-new-zigbee-touch-wifi-light-dimmer-smart-switch
-    "_TZE200_e3oitdyu": [ numEps: 2, model: "TS110E", inClusters: "0000,0004,0005,EF00",          joinName: "Moes ZigBee Dimmer Switche 2CH"],                     // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
+    "_TZE200_e3oitdyu": [ numEps: 2, model: "TS0601", inClusters: "0000,0004,0005,EF00",          joinName: "Moes ZigBee Dimmer Switch 2CH"],                     // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
     "_TZ3210_k1msuvg6": [ numEps: 1, model: "TS110E", inClusters: "0004,0005,0003,0006,0008,EF00,0000", joinName: "Girier Zigbee 1-Gang Dimmer module"],           // https://community.hubitat.com/t/girier-tuya-zigbee-3-0-light-switch-module-smart-diy-breaker-1-2-3-4-gang-supports-2-way-control/104546/36?u=kkossev
     "GLEDOPTO":         [ numEps: 1, model: "GL-SD-001", inClusters: "0000,0003,0004,0005,0006,0008,1000", joinName: "Gledopto Triac Dimmer"],                     //
     "_TZ3210_pagajpog": [ numEps: 2, model: "TS110E", inClusters: "0005,0004,0006,0008,E001,0000", joinName: "Lonsonho Tuya Smart Zigbee Dimmer"],                 // https://community.hubitat.com/t/release-tuya-lonsonho-1-gang-and-2-gang-zigbee-dimmer-module-driver/60372/76?u=kkossev
@@ -261,7 +261,6 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
             description   : "TS110E Tuya Dimmers",
             models        : ["TS110E"],
             fingerprints  : [
-                [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS110E", manufacturer:"_TZE200_e3oitdyu", deviceJoinName: "Moes ZigBee Dimmer Switch 2CH"],                  // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
                 [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0005,0004,0006,0008,EF00,0000", outClusters:"0019,000A", model:"TS110E", manufacturer:"_TZ3210_3mpwqzuu", deviceJoinName: "Tuya 2-gang Dimmer module"]             // https://community.hubitat.com/t/driver-support-for-tuya-dimmer-module-model-ts110e-manufacturer-tz3210-4ubylghk/116077/26?u=kkossev
             ],
             deviceJoinName: "TS110E Tuya Dimmer",
@@ -317,6 +316,8 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
                 [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_fjjbhx9d", deviceJoinName: "Moes Zigbee 2-Gang Dimmer module"],        // https://community.hubitat.com/t/tuya-moes-1-2-3-gang-dimmer/104596/5?u=kkossev 
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_drs6j6m5", deviceJoinName: "Lifud Model LF-AAZ030-0750-42"],            // https://community.hubitat.com/t/tuya-moes-1-2-3-gang-dimmer/104596/25?u=kkossev
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_3p5ydos3", deviceJoinName: "BSEED Zigbee 1-Gang Dimmer module"],        // not tested
+                [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_e3oitdyu", deviceJoinName: "Moes ZigBee Dimmer Switch 2CH"]                  // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
+                
             ],
             deviceJoinName: "TS0601 Tuya Dimmer",
             capabilities  : ["SwitchLevel": true],
@@ -807,6 +808,7 @@ void setCmdTime(val){
 
 void setCmdTimeNow(){
     def now = new Date().getTime()
+    if (state.lastTx == null) { state.lastTx = [:] }
     state.lastTx["cmdTime"] = now
     if (isChild()) {
         parent.setCmdTime(now)
@@ -1452,9 +1454,64 @@ def configure() {
     updated()
 }
 
+void getAllProperties() {
+    log.trace 'Properties:'    
+    device.properties.each { it->
+        log.debug it
+    }
+    log.trace 'Settings:'    
+    settings.each { it->
+        log.debug "${it.key} =  ${it.value}"    // https://community.hubitat.com/t/how-do-i-get-the-datatype-for-an-app-setting/104228/6?u=kkossev
+    }    
+    log.trace 'Done'    
+}
+
+// delete all Preferences
+void deleteAllSettings() {
+    settings.each { it->
+        log.debug "deleting ${it.key}"
+        //this.removeSetting("${it.key}")
+        device.removeSetting("${it.key}")
+    }
+    logInfo  "All settings (preferences) DELETED"
+}
+
+// delete all attributes
+void deleteAllCurrentStates() {
+    device.properties.supportedAttributes.each { it->
+        log.debug "deleting $it"
+        device.deleteCurrentState("$it")
+    }
+    logInfo "All current states (attributes) DELETED"
+}
+
+// delete all State Variables
+void deleteAllStates() {
+    state.each { it->
+        log.debug "deleting state ${it.key}"
+    }
+    state.clear()
+    logInfo "All States DELETED"
+}
+
+void deleteAllScheduledJobs() {
+    unschedule()
+    logInfo "All scheduled jobs DELETED"
+}
+
+
+def loadAllDefaults() {
+    logWarn "loadAllDefaults() !!!"
+    deleteAllSettings()
+    deleteAllCurrentStates()
+    deleteAllScheduledJobs()
+    deleteAllStates()
+}
+
 // called on hub startup if driver specifies capability "Initialize" (otherwise is not required or automatically called if present)
 def initialize() {
     log.info "<b>initialize()</b> ... ${getDeviceInfo()}"
+    loadAllDefaults()
     initializeVars( fullInit = true )
     // TuyaBlackMagic + create child devices
     initialized()
@@ -1520,6 +1577,7 @@ void initializeVars( boolean fullInit = false ) {
     if (fullInit == true || settings?.minLevel == null) device.updateSetting("minLevel", [value:DEFAULT_MIN_LEVEL, type:"number"]) 
     if (fullInit == true || settings?.maxLevel == null) device.updateSetting("maxLevel", [value:DEFAULT_MAX_LEVEL, type:"number"]) 
     if (fullInit == true || settings?.healthCheckInterval == null) device.updateSetting('healthCheckInterval', [value: HealthcheckIntervalOpts.defaultValue.toString(), type: 'enum'])
+    //if (fullInit == true)  { device.updateSetting('lightType', [value: null, type: 'enum'])}     //  no lightType by default!  TS110ELightTypeOptions.options[value]
 }
 
 // will be called when user selects Save Preferences
