@@ -65,7 +65,7 @@ ver 0.5.2  2023/06/19 kkossev      - added digital/physical; checkDriverVersion 
 ver 0.6.0  2023/07/30 kkossev      - child devices ping(), toggle(), physical/digital, healthStatus offline bug fixes; added [refresh] event info;
 ver 0.6.1  2023/08/23 kkossev      - bugfix: _TZE200_e3oitdyu model changed to TS0601; initialize button re-enabled (loads all defaults!); cmdTime state secured;
 ver 0.6.2  2023/09/09 kkossev      - added TS0601 _TZE204_zenj4lxv Moes ZigBee 2-Gang Dimmer; _TZE204_1v1dxkck (3-gang); _TZE204_hlx9tnzb (1-gang); stopping dimmer countdowns;
-ver 0.6.3  2023/09/09 kkossev      - (dev. branch) decoding ledMode, powerOnMode lightType for TS0601 dimmers
+ver 0.6.3  2023/09/10 kkossev      - (dev. branch) setting ledMode, powerOnMode lightType for TS0601 dimmers
 *
 *                                   TODO: LED configuration settings
 *                                   TODO: Lonsonho _TZ3210_4ubylghk : bulb type :  https://github.com/zigpy/zha-device-handlers/issues/1415#issuecomment-1062843118
@@ -82,7 +82,7 @@ ver 0.6.3  2023/09/09 kkossev      - (dev. branch) decoding ledMode, powerOnMode
 */
 
 def version() { "0.6.3" }
-def timeStamp() {"2023/09/09 5:24 PM"}
+def timeStamp() {"2023/09/10 10:27 PM"}
 
 @Field static final Boolean _DEBUG = false
 
@@ -199,7 +199,7 @@ metadata {
 ]
 @Field static final Map TS110ELightTypeOptions = [            // 0xFC02 (64514), type: 0x20
     defaultValue: 0,
-    options     : [0: 'led', 1: 'incandescent', 2: 'halogen']
+    options     : [0: 'LED', 1: 'incandescent', 2: 'halogen']
 ]
 
 @Field static final Map TS0601LEDOptions = [            // ledMode - Moes Dimmers
@@ -1707,6 +1707,33 @@ def updated() {
         logDebug "sending maxLevel command=${dpCommand} value=${value} ($dpValHex)"
         if (isParent()) cmdsTuya += sendTuyaCommand(dpCommand, DP_TYPE_VALUE, dpValHex)
         else cmdsTuya += parent?.sendTuyaCommand(dpCommand, DP_TYPE_VALUE, dpValHex)
+        // lightType
+        if (settings.lightType != null) {
+            value = settings.lightType as int
+            dpValHex  = zigbee.convertToHexString(value as int, 2) 
+            logDebug "updated() sending lightType value ${value} (TS110ELightTypeOptions.options[value as int])"
+            dpCommand = "04"
+            if (isParent()) cmdsTuya += sendTuyaCommand(dpCommand, DP_TYPE_ENUM, dpValHex)
+            else cmdsTuya += parent?.sendTuyaCommand(dpCommand, DP_TYPE_ENUM, dpValHex)
+        }
+        // powerOnMode
+        if (settings.powerOnMode != null) {
+            value = settings.powerOnMode as int
+            dpValHex  = zigbee.convertToHexString(value as int, 2) 
+            logDebug "updated() sending powerOnMode value ${value} (TS0601PowerOnOptions.options[value as int])"
+            dpCommand = "0E"
+            if (isParent()) cmdsTuya += sendTuyaCommand(dpCommand, DP_TYPE_ENUM, dpValHex)
+            else cmdsTuya += parent?.sendTuyaCommand(dpCommand, DP_TYPE_ENUM, dpValHex)
+        }
+        // ledMode
+        if (settings.ledMode != null) {
+            value = settings.ledMode as int
+            dpValHex  = zigbee.convertToHexString(value as int, 2) 
+            logDebug "updated() sending ledMode value ${value} (TS0601LEDOptions.options[value as int])"
+            dpCommand = "15"
+            if (isParent()) cmdsTuya += sendTuyaCommand(dpCommand, DP_TYPE_ENUM, dpValHex)
+            else cmdsTuya += parent?.sendTuyaCommand(dpCommand, DP_TYPE_ENUM, dpValHex)
+        }
         //
         hubitat.device.HubMultiAction allActions = new hubitat.device.HubMultiAction()
         cmdsTuya.each {
