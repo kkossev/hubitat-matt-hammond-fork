@@ -357,7 +357,7 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
             models        : ["TS0601"],
             fingerprints  : [
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_fvldku9h", deviceJoinName: "Tuya Fan Switch"],                         // https://www.aliexpress.com/item/4001242513879.html
-                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_r32ctezx", deviceJoinName: "Tuya Fan Switch"]                          // https://www.aliexpress.us/item/3256804518783061.html https://github.com/Koenkk/zigbee2mqtt/issues/12793
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_r32ctezx", deviceJoinName: "Tuya Fan Switch"]                         // https://www.aliexpress.us/item/3256804518783061.html https://github.com/Koenkk/zigbee2mqtt/issues/12793
             ],
             deviceJoinName: "TS0601 Fan Switch",
             capabilities  : ["SwitchLevel": false],
@@ -2183,10 +2183,10 @@ def testX( var ) {
 /*
 ID	    Name	                        Data type	    Range	        Defualt value
 0xFC00	Level control max min	        uint16 -0x21    0x0000 - 0xffff	0x01ff
-0xFC02	Level control bulb type	        uint8 -0x20	    0x00–0xFF	    0x00
-0xFC03	Level control scr state	        uint8 -0x20	    0x00–0xFF	    0x01
-0xFC04	Level control current percentage uint8 -0x20	0x00–0xFF	    0x01
-0xFC05	Level control min percentage	uint8 -0x20	    0x00–0xFF	    0x01
+0xFC02	Level control bulb type	        uint8 -0x20	    0x00ï¿½0xFF	    0x00
+0xFC03	Level control scr state	        uint8 -0x20	    0x00ï¿½0xFF	    0x01
+0xFC04	Level control current percentage uint8 -0x20	0x00ï¿½0xFF	    0x01
+0xFC05	Level control min percentage	uint8 -0x20	    0x00ï¿½0xFF	    0x01
 */
 
 
