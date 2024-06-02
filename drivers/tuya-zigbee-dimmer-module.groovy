@@ -66,6 +66,7 @@ ver 0.6.0  2023/07/30 kkossev      - child devices ping(), toggle(), physical/di
 ver 0.6.1  2023/08/23 kkossev      - bugfix: _TZE200_e3oitdyu model changed to TS0601; initialize button re-enabled (loads all defaults!); cmdTime state secured;
 ver 0.6.2  2023/09/09 kkossev      - added TS0601 _TZE204_zenj4lxv Moes ZigBee 2-Gang Dimmer; _TZE204_1v1dxkck (3-gang); _TZE204_hlx9tnzb (1-gang); stopping dimmer countdowns;
 ver 0.6.3  2023/10/15 kkossev      - setting ledMode, powerOnMode lightType for TS0601 dimmers
+ver 0.7.0  2024/06/02 kkossev      - (dev. branch) TS0601 _TZE200_r32ctezx moved to new TS0601_LERLINK_FAN group
 *
 *                                   TODO: add TS0601 _TZE200_p0gzbqct _TZE200_p0gzbqct // https://community.hubitat.com/t/re-release-beta-tuya-zigbee-dimmer-module-w-healthstatus/120180/16?u=kkossev 
 *                                   TODO: LED configuration settings
@@ -82,8 +83,8 @@ ver 0.6.3  2023/10/15 kkossev      - setting ledMode, powerOnMode lightType for 
 *
 */
 
-def version() { "0.6.3" }
-def timeStamp() {"2023/10/15 11:58 PM"}
+def version() { "0.7.0" }
+def timeStamp() {"2024/06/02 10:49 PM"}
 
 @Field static final Boolean _DEBUG = false
 
@@ -242,7 +243,7 @@ metadata {
     "_TZE200_fjjbhx9d": [ numEps: 2, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "Moes Zigbee 2-Gang Dimmer module" ],                  // https://community.hubitat.com/t/tuya-moes-1-2-3-gang-dimmer/104596/5?u=kkossev 
     "_TZE200_drs6j6m5": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "Lifud Model LF-AAZ030-0750-42" ],                     // https://community.hubitat.com/t/tuya-moes-1-2-3-gang-dimmer/104596/25?u=kkossev
     "_TZE200_fvldku9h": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "Tuya Fan Switch" ] ,                                  // https://www.aliexpress.com/item/4001242513879.html
-    "_TZE200_r32ctezx": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "Tuya Fan Switch" ],                                   // https://www.aliexpress.us/item/3256804518783061.html https://github.com/Koenkk/zigbee2mqtt/issues/12793
+    "_TZE200_r32ctezx": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "Lerlink T2-Z67/T2-W67 Fan Switch" ],                  // https://github.com/isakharov/zigbee-herdsman-converters/blob/0bffc49faf69244711677a5735f54d8dd8ea8f7c/devices/tuya.js#L4117-L4143                               // https://www.aliexpress.us/item/3256804518783061.html https://github.com/Koenkk/zigbee2mqtt/issues/12793
     "_TZE200_3p5ydos3": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "BSEED Zigbee Dimmer" ],                               // https://www.bseed.com/collections/zigbee-series/products/bseed-eu-russia-new-zigbee-touch-wifi-light-dimmer-smart-switch
     "_TZE200_e3oitdyu": [ numEps: 2, model: "TS0601", inClusters: "0000,0004,0005,EF00",          joinName: "Moes ZigBee Dimmer Switch 2CH"],                     // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
     "_TZ3210_k1msuvg6": [ numEps: 1, model: "TS110E", inClusters: "0004,0005,0003,0006,0008,EF00,0000", joinName: "Girier Zigbee 1-Gang Dimmer module"],           // https://community.hubitat.com/t/girier-tuya-zigbee-3-0-light-switch-module-smart-diy-breaker-1-2-3-4-gang-supports-2-way-control/104546/36?u=kkossev
@@ -356,10 +357,22 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
             description   : "TS0601 Fan Switch",
             models        : ["TS0601"],
             fingerprints  : [
-                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_fvldku9h", deviceJoinName: "Tuya Fan Switch"],                         // https://www.aliexpress.com/item/4001242513879.html
-                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_r32ctezx", deviceJoinName: "Tuya Fan Switch"]                         // https://www.aliexpress.us/item/3256804518783061.html https://github.com/Koenkk/zigbee2mqtt/issues/12793
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_fvldku9h", deviceJoinName: "Tuya Fan Switch"]                         // https://www.aliexpress.com/item/4001242513879.html
             ],
             deviceJoinName: "TS0601 Fan Switch",
+            capabilities  : ["SwitchLevel": false],
+            attributes    : ["healthStatus": "unknown", "powerSource": "mains"],
+            configuration : [],
+            preferences   : []
+    ],
+
+    "TS0601_LERLINK_FAN"  : [
+            description   : "TS0601 LERLINK Fan Switch",
+            models        : ["TS0601"],
+            fingerprints  : [
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_r32ctezx", deviceJoinName: "Lerlink T2-Z67/T2-W67 Fan Switch"]                         // https://www.aliexpress.us/item/3256804518783061.html https://github.com/Koenkk/zigbee2mqtt/issues/12793 https://github.com/isakharov/zigbee-herdsman-converters/blob/0bffc49faf69244711677a5735f54d8dd8ea8f7c/devices/tuya.js#L4117-L4143 
+            ],
+            deviceJoinName: "TS0601 LERLINK Fan Switch",
             capabilities  : ["SwitchLevel": false],
             attributes    : ["healthStatus": "unknown", "powerSource": "mains"],
             configuration : [],
@@ -403,6 +416,7 @@ def getModelGroup()        { return getDW().state.deviceProfile ?:"UNKNOWN" }
 def getDeviceProfilesMap() {deviceProfilesV2.values().description as List<String>}
 def isTS0601()             { return getDW().getModelGroup().contains("TS0601") }
 def isFanController()      { return getDW().getModelGroup().contains("TS0601_FAN") }
+def isLerlinkFanController() { return getDW().getModelGroup().contains("TS0601_LERLINK_FAN") }
 def isTS110E()             { return getDW().getModelGroup().contains("TS110E_DIMMER") }
 def isGirier()             { return getDW().getModelGroup().contains("TS110E_GIRIER_DIMMER") }
 def isLonsonho()           { return getDW().getModelGroup().contains("TS110E_LONSONHO_DIMMER") }
@@ -938,6 +952,11 @@ def cmdSetLevel(String childDni, value, duration) {
             dpCommand = "04"
             dpValHex  = zigbee.convertToHexString((value/10) as int, 8) 
         }
+        else if (isLerlinkFanController()) {
+            dpCommand = "03"
+            dpValHex  = zigbee.convertToHexString((value/10) as int, 8) 
+            // TODO - check if the dpType is VALUE or ENUM?
+        }
         logDebug "cmdSetLevel: TS0601: sending cmdSetLevel command=${dpCommand} value=${value} ($dpValHex)"
         cmdsTuya = sendTuyaCommand(dpCommand, DP_TYPE_VALUE, dpValHex)
         if (child?.isAutoOn() && (device.currentState('switch', true)?.value ?: "") != 'on') {
@@ -1035,37 +1054,29 @@ def parseTuyaCluster( descMap ) {
     def value = getAttributeValue(descMap.data)
     switch (cmd) {
         case "01" : // Switch1
-        case "07" : // Switch2
-        case "0F" : // Switch3
             handleTuyaClusterSwitchCmd(cmd, value)
             break
-        case "02" : // Brightness1 (switch level state)
-        case "08" : // Brightness2
-        case "10" : // Brightness3
-            logDebug "parseTuyaCluster: received: Tuya brighntness(level) cmd=${cmd} value=${value}"
-            handleTuyaClusterBrightnessCmd(cmd, value/10 as int)
+        case "02" : // Brightness1 (switch level state) or countdown for LerlinkFanController
+            if (isLerlinkFanController()) {
+                logDebug "parseTuyaCluster: received: LerlinkFanController countdown cmd=${cmd} value=${value}"
+                if (value != 0 ) {
+                    stopCountdown(cmd, value)
+                }
+            }
+            else {
+                logDebug "parseTuyaCluster: received: Tuya brighntness(level) cmd=${cmd} value=${value}"
+                handleTuyaClusterBrightnessCmd(cmd, value/10 as int)
+            }
             break        
-        case "03" : // Minimum brightness1
-        case "09" : // Minimum brightness2
-        case "11" : // Minimum brightness3
-            def switchNumber = cmd == "03" ? "01" : cmd == "09" ? "02" : cmd == "11" ? "03" : null
-            logDebug "parseTuyaCluster: received: minimum brightness switch#${switchNumber} is ${value/10 as int} (raw=${value})"
-            handleTuyaClusterMinBrightnessCmd(cmd, value/10 as int)
-            break
-        case "05" : // Maximum brightness1
-        case "0B" : // Maximum brightness2
-        case "13" : // Maximum brightness3
-            def switchNumber = cmd == "05" ? "01" : cmd == "0B" ? "02" : cmd == "13" ? "03" : null
-            logDebug "parseTuyaCluster: received: maximum brightness switch#${switchNumber} is ${value/10 as int} (raw=${value})"
-            handleTuyaClusterMaxBrightnessCmd(cmd, value/10 as int)
-            break
-        case "06" : // Countdown1
-        case "0C" : // Countdown2
-        case "14" : // Countdown3
-            def switchNumber = cmd == "06" ? "01" : cmd == "0C" ? "02" : cmd == "14" ? "03" : null
-            logDebug "Countdown ${switchNumber} is ${value}s"
-            if (value != 0 ) {
-                stopCountdown(cmd, value)
+        case "03" : // Minimum brightness1 or fan speed for LerlinkFanController
+            if (isLerlinkFanController()) {
+                logDebug "parseTuyaCluster: received: LerlinkFanController cmd=${cmd} value=${value}"
+                handleTuyaClusterBrightnessCmd(cmd, value as int)
+            }
+            else {
+                def switchNumber =  "01"
+                logDebug "parseTuyaCluster: received: minimum brightness switch#${switchNumber} is ${value/10 as int} (raw=${value})"
+                handleTuyaClusterMinBrightnessCmd(cmd, value/10 as int)
             }
             break
         case "04" : // (04) level for _TZE200_fvldku9h ;  Tuya type of light source for all others?
@@ -1080,11 +1091,54 @@ def parseTuyaCluster( descMap ) {
                 logInfo "$description"
             }
             break
+        case "05" : // Maximum brightness1
+            def switchNumber = "01"
+            logDebug "parseTuyaCluster: received: maximum brightness switch#${switchNumber} is ${value/10 as int} (raw=${value})"
+            handleTuyaClusterMaxBrightnessCmd(cmd, value/10 as int)
+            break
+        case "06" : // Countdown1
+            def switchNumber = "01"
+            logDebug "Countdown ${switchNumber} is ${value}s"
+            if (value != 0 ) {
+                stopCountdown(cmd, value)
+            }
+            break
+        case "07" : // Switch2
+            handleTuyaClusterSwitchCmd(cmd, value)
+            break
+        case "08" : // Brightness2
+            logDebug "parseTuyaCluster: received: Tuya brighntness(level) cmd=${cmd} value=${value}"
+            handleTuyaClusterBrightnessCmd(cmd, value/10 as int)
+            break        
+        case "09" : // Minimum brightness2
+            def switchNumber = "02"
+            logDebug "parseTuyaCluster: received: minimum brightness switch#${switchNumber} is ${value/10 as int} (raw=${value})"
+            handleTuyaClusterMinBrightnessCmd(cmd, value/10 as int)
+            break
         case "0A" : // (10)    // TS0601 Moes dimmer
             logDebug "parseTuyaCluster: Unknown Tuya dp= ${cmd} fn=${value}"
             break
-        case "0C" : // (12)    // TS0601 Moes dimmer
-            logDebug "parseTuyaCluster: Unknown Tuya dp= ${cmd} fn=${value}"
+        case "0B" : // (11) Maximum brightness2 or power-on status for LerlinkFanController
+            if (isLerlinkFanController()) {
+                logDebug "parseTuyaCluster: received: LerlinkFanController power-on status cmd=${cmd} value=${value}"
+                String modeName = TS0601PowerOnOptions.options[value as int]
+                String description = "Power-On mode is $modeName"
+                device.updateSetting('powerOnMode', [value: value.toString(), type: 'enum'])
+                sendEvent(name:'powerOnMode', value: modeName, descriptionText: description, type: 'physical')
+                logInfo "$description"
+            }
+            else {
+                def switchNumber = "02"
+                logDebug "parseTuyaCluster: received: maximum brightness switch#${switchNumber} is ${value/10 as int} (raw=${value})"
+                handleTuyaClusterMaxBrightnessCmd(cmd, value/10 as int)
+            }
+            break
+        case "0C" : // (12) Countdown2
+            def switchNumber = "02"
+            logDebug "Countdown ${switchNumber} is ${value}s"
+            if (value != 0 ) {
+                stopCountdown(cmd, value)
+            }
             break
         case "0E" : // (14)
             //logInfo "Power-on Status Setting is ${value}"
@@ -1094,8 +1148,32 @@ def parseTuyaCluster( descMap ) {
             sendEvent(name:'powerOnMode', value: modeName, descriptionText: description, type: 'physical')
             logInfo "$description"
             break
+        case "0F" : // (15) Switch3
+            handleTuyaClusterSwitchCmd(cmd, value)
+            break
+        case "10" : // (16) Brightness3
+            logDebug "parseTuyaCluster: received: Tuya brighntness(level) cmd=${cmd} value=${value}"
+            handleTuyaClusterBrightnessCmd(cmd, value/10 as int)
+            break        
+        case "11" : // (17) Minimum brightness3
+            def switchNumber = "03"
+            logDebug "parseTuyaCluster: received: minimum brightness switch#${switchNumber} is ${value/10 as int} (raw=${value})"
+            handleTuyaClusterMinBrightnessCmd(cmd, value/10 as int)
+            break
         case "12" : // (18)
             logDebug "parseTuyaCluster: Unknown Tuya dp= ${cmd} fn=${value}"
+            break
+        case "13" : // (19) Maximum brightness3
+            def switchNumber = "03"
+            logDebug "parseTuyaCluster: received: maximum brightness switch#${switchNumber} is ${value/10 as int} (raw=${value})"
+            handleTuyaClusterMaxBrightnessCmd(cmd, value/10 as int)
+            break
+        case "14" : // (20) Countdown3
+            def switchNumber = "03"
+            logDebug "Countdown ${switchNumber} is ${value}s"
+            if (value != 0 ) {
+                stopCountdown(cmd, value)
+            }
             break
         case "15" : // (21)
             String modeName = TS0601LEDOptions.options[value as int]
@@ -1723,7 +1801,8 @@ def updated() {
             value = settings.powerOnMode as int
             dpValHex  = zigbee.convertToHexString(value as int, 2) 
             logDebug "updated() sending powerOnMode value ${value} (TS0601PowerOnOptions.options[value as int])"
-            dpCommand = "0E"
+            if (isLerlinkFanController()) { dpCommand = "0B" }
+            else { dpCommand = "0E" }
             if (isParent()) cmdsTuya += sendTuyaCommand(dpCommand, DP_TYPE_ENUM, dpValHex)
             else cmdsTuya += parent?.sendTuyaCommand(dpCommand, DP_TYPE_ENUM, dpValHex)
         }
