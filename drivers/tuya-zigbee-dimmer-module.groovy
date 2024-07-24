@@ -253,8 +253,8 @@ metadata {
     "_TZ3210_3mpwqzuu": [ numEps: 2, model: "TS110E", inClusters: "0005,0004,0006,0008,E001,0000", joinName: "Tuya Smart Zigbee Dimmer"],                          // https://community.hubitat.com/t/driver-support-for-tuya-dimmer-module-model-ts110e-manufacturer-tz3210-4ubylghk/116077/26?u=kkossev
     "_TZE204_hlx9tnzb": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Moes Zigbee 1-Gang Switch Dimmer"],                            // 
     "_TZE204_zenj4lxv": [ numEps: 2, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Moes Zigbee 2-Gang Switch Dimmer"],                            // https://www.aliexpress.com/item/1005005870551288.html 
-    "_TZE204_1v1dxkck": [ numEps: 3, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Moes Zigbee 3-Gang Switch Dimmer"]                             // 
-    
+    "_TZE204_1v1dxkck": [ numEps: 3, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Moes Zigbee 3-Gang Switch Dimmer"],                             // 
+    "_TZE204_znvwzxkq": [ numEps: 3, model: "TS0601", inClusters: "0000,0004,0005,EF00", joinName: "Zemismart Dimmer"] // https://community.hubitat.com/t/re-release-beta-tuya-zigbee-dimmer-module-w-healthstatus/120180/36?u=vctgomes 
 ]
 
 def getNumEps() {return config()?.numEps ?: 1}
@@ -344,7 +344,8 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
                 [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_zenj4lxv", deviceJoinName: "Moes ZigBee 2-Gang Dimmer"],               // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
                 [numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_1v1dxkck", deviceJoinName: "Moes ZigBee 3-Gang Dimmer"],               // https://github.com/Koenkk/zigbee-herdsman-converters/blob/23bee5ddfca1f62fc0a03d40fbf788b0b7fe2fc3/src/devices/tuya.ts#L1265
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_w4cryh2i", deviceJoinName: "Moes Zigbee Rotary/Touch Light Dimmer"],   // https://community.hubitat.com/t/re-release-beta-tuya-zigbee-dimmer-module-w-healthstatus/120180/16?u=kkossev
-            ],
+            	[numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_znvwzxkq", deviceJoinName: "Zemismart Dimmer"], // https://community.hubitat.com/t/re-release-beta-tuya-zigbee-dimmer-module-w-healthstatus/120180/36?u=vctgomes
+	    ],
             deviceJoinName: "TS0601 Tuya Dimmer",
             capabilities  : ["SwitchLevel": true],
             attributes    : ["healthStatus": "unknown", "powerSource": "mains"],
@@ -2183,10 +2184,10 @@ def testX( var ) {
 /*
 ID	    Name	                        Data type	    Range	        Defualt value
 0xFC00	Level control max min	        uint16 -0x21    0x0000 - 0xffff	0x01ff
-0xFC02	Level control bulb type	        uint8 -0x20	    0x00–0xFF	    0x00
-0xFC03	Level control scr state	        uint8 -0x20	    0x00–0xFF	    0x01
-0xFC04	Level control current percentage uint8 -0x20	0x00–0xFF	    0x01
-0xFC05	Level control min percentage	uint8 -0x20	    0x00–0xFF	    0x01
+0xFC02	Level control bulb type	        uint8 -0x20	    0x00Â–0xFF	    0x00
+0xFC03	Level control scr state	        uint8 -0x20	    0x00Â–0xFF	    0x01
+0xFC04	Level control current percentage uint8 -0x20	0x00Â–0xFF	    0x01
+0xFC05	Level control min percentage	uint8 -0x20	    0x00Â–0xFF	    0x01
 */
 
 
