@@ -66,7 +66,8 @@ ver 0.6.0  2023/07/30 kkossev      - child devices ping(), toggle(), physical/di
 ver 0.6.1  2023/08/23 kkossev      - bugfix: _TZE200_e3oitdyu model changed to TS0601; initialize button re-enabled (loads all defaults!); cmdTime state secured;
 ver 0.6.2  2023/09/09 kkossev      - added TS0601 _TZE204_zenj4lxv Moes ZigBee 2-Gang Dimmer; _TZE204_1v1dxkck (3-gang); _TZE204_hlx9tnzb (1-gang); stopping dimmer countdowns;
 ver 0.6.3  2023/10/15 kkossev      - setting ledMode, powerOnMode lightType for TS0601 dimmers
-ver 0.7.0  2024/06/02 kkossev      - (dev. branch) TS0601 _TZE200_r32ctezx moved to new TS0601_LERLINK_FAN group
+ver 0.6.4  2024/07/22 hhorigian    - added new version of:  TS110E _TZ3210_pagajpog 2 gang Dimmer, with  Application id= (44). New inClusters:0005,0004,0006,0008,E001,1000,0003,0000
+ver 0.7.0  2024/07/24 kkossev      - (dev. branch) TS0601 _TZE200_r32ctezx moved to new TS0601_LERLINK_FAN group
 *
 *                                   TODO: add TS0601 _TZE200_p0gzbqct _TZE200_p0gzbqct // https://community.hubitat.com/t/re-release-beta-tuya-zigbee-dimmer-module-w-healthstatus/120180/16?u=kkossev 
 *                                   TODO: LED configuration settings
@@ -84,7 +85,7 @@ ver 0.7.0  2024/06/02 kkossev      - (dev. branch) TS0601 _TZE200_r32ctezx moved
 */
 
 def version() { "0.7.0" }
-def timeStamp() {"2024/06/02 10:49 PM"}
+def timeStamp() {"2024/07/24 8:16 PM"}
 
 @Field static final Boolean _DEBUG = false
 
@@ -255,7 +256,8 @@ metadata {
     "_TZE204_hlx9tnzb": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Moes Zigbee 1-Gang Switch Dimmer"],                            // 
     "_TZE204_zenj4lxv": [ numEps: 2, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Moes Zigbee 2-Gang Switch Dimmer"],                            // https://www.aliexpress.com/item/1005005870551288.html 
     "_TZE204_1v1dxkck": [ numEps: 3, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Moes Zigbee 3-Gang Switch Dimmer"]                             // 
-    
+    "_TZ3210_pagajpog": [ numEps: 2, model: "TS110E", inClusters: "0005,0004,0006,0008,E001,1000,0003,0000", joinName: "Smart Zigbee Dimmer 2-gang"],                 //Vartan - BR
+
 ]
 
 def getNumEps() {return config()?.numEps ?: 1}
@@ -313,7 +315,8 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
             models        : ["TS110E"],
             fingerprints  : [
                 [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0005,0004,0006,0008,E001,0000", outClusters:"0019,000A", model:"TS110E", manufacturer:"_TZ3210_pagajpog", deviceJoinName: "Lonsonho Tuya Smart Zigbee Dimmer"],        // https://community.hubitat.com/t/release-tuya-lonsonho-1-gang-and-2-gang-zigbee-dimmer-module-driver/60372/76?u=kkossev
-                [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0004,0005,0006,0008,0300,EF00,0000", outClusters:"0019,000A", model:"TS110E", manufacturer:"_TZ3210_4ubylghk", deviceJoinName: "Lonsonho Tuya Smart Zigbee Dimmer"],        // https://community.hubitat.com/t/driver-support-for-tuya-dimmer-module-model-ts110e-manufacturer-tz3210-4ubylghk/116077?u=kkossev
+                [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0005,0004,0006,0008,E001,1000,0003,0000", outClusters:"0019,000A", model:"TS110E", manufacturer:"_TZ3210_pagajpog", deviceJoinName: "Smart Zigbee Dimmer 2-gang"],       	  //Vartan - BR 
+		[numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0004,0005,0006,0008,0300,EF00,0000", outClusters:"0019,000A", model:"TS110E", manufacturer:"_TZ3210_4ubylghk", deviceJoinName: "Lonsonho Tuya Smart Zigbee Dimmer"],        // https://community.hubitat.com/t/driver-support-for-tuya-dimmer-module-model-ts110e-manufacturer-tz3210-4ubylghk/116077?u=kkossev
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0003,0005,0004,0006,0008,E001,1000,0000", outClusters:"0019,000A", model:"TS110E", manufacturer:"_TZ3210_ngqk6jia",joinName: "Lonsonho Smart Zigbee Dimmer"]           // KK
             ],
             deviceJoinName: "TS110E Lonsonho Dimmer",
@@ -2262,10 +2265,10 @@ def testX( var ) {
 /*
 ID	    Name	                        Data type	    Range	        Defualt value
 0xFC00	Level control max min	        uint16 -0x21    0x0000 - 0xffff	0x01ff
-0xFC02	Level control bulb type	        uint8 -0x20	    0x00�0xFF	    0x00
-0xFC03	Level control scr state	        uint8 -0x20	    0x00�0xFF	    0x01
-0xFC04	Level control current percentage uint8 -0x20	0x00�0xFF	    0x01
-0xFC05	Level control min percentage	uint8 -0x20	    0x00�0xFF	    0x01
+0xFC02	Level control bulb type	        uint8 -0x20	    0x00–0xFF	    0x00
+0xFC03	Level control scr state	        uint8 -0x20	    0x00–0xFF	    0x01
+0xFC04	Level control current percentage uint8 -0x20	0x00–0xFF	    0x01
+0xFC05	Level control min percentage	uint8 -0x20	    0x00–0xFF	    0x01
 */
 
 

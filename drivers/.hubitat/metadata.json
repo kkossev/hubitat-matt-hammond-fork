@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "files": [
     {
       "filepath": "/c:/Work/hubitat-matt-hammond-fork/drivers/tuya-zigbee-dimmer-module.groovy",
@@ -7,4 +8,7 @@
       "version": 1123
     }
   ]
+=======
+  "files": []
+>>>>>>> master
 }
