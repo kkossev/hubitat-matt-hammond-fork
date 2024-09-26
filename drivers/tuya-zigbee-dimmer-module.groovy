@@ -70,7 +70,7 @@ ver 0.6.4  2024/07/22 hhorigian    - added new version of:  TS110E _TZ3210_pagaj
 ver 0.7.0  2024/07/24 kkossev      - TS0601 _TZE200_r32ctezx moved to new TS0601_LERLINK_FAN group; resolved merge conflicts;
 ver 0.7.1  2024/07/29 hhorigian    - added new version of:  TS110E _TZ3210_tkkb1ym8 2 gang Dimmer
 ver 0.7.2  2024/09/02 kkossev      - _TZE200_1agwnems MG-ZD01W 1-Gang Dimmer - inClusters fingerprint correction;
-ver 0.7.3  2024/09/22 kkossev      - (dev.branch) ignoring the min and max brightness for OzSmartThings (_TZE200_1agwnems) dimmer;
+ver 0.7.3  2024/09/26 kkossev      - (dev.branch) ignoring the min and max brightness for OzSmartThings (_TZE200_1agwnems) dimmer; added TS0601 _TZE204_o9gyszw2 Avatto ZigBee 2-Gang Dimmer;
 *
 *                                   TODO: add TS0601 _TZE200_p0gzbqct _TZE200_p0gzbqct // https://community.hubitat.com/t/re-release-beta-tuya-zigbee-dimmer-module-w-healthstatus/120180/16?u=kkossev 
 *                                   TODO: LED configuration settings
@@ -88,7 +88,7 @@ ver 0.7.3  2024/09/22 kkossev      - (dev.branch) ignoring the min and max brigh
 */
 
 def version() { "0.7.3" }
-def timeStamp() {"2024/09/22 12:38 PM"}
+def timeStamp() {"2024/09/26 1:11 PM"}
 
 @Field static final Boolean _DEBUG = false
 
@@ -262,7 +262,8 @@ boolean isOzSmartThings() { device.getDataValue("manufacturer") == "_TZE200_1agw
     "_TZE204_hlx9tnzb": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Moes Zigbee 1-Gang Switch Dimmer"],                           // 
     "_TZE204_zenj4lxv": [ numEps: 2, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Moes Zigbee 2-Gang Switch Dimmer"],                           // https://www.aliexpress.com/item/1005005870551288.html 
     "_TZE204_1v1dxkck": [ numEps: 3, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Moes Zigbee 3-Gang Switch Dimmer"],                           // 
-    "_TZ3210_pagajpog": [ numEps: 2, model: "TS110E", inClusters: "0005,0004,0006,0008,E001,1000,0003,0000", joinName: "Smart Zigbee Dimmer 2-gang"]              //Vartan - BR
+    "_TZ3210_pagajpog": [ numEps: 2, model: "TS110E", inClusters: "0005,0004,0006,0008,E001,1000,0003,0000", joinName: "Smart Zigbee Dimmer 2-gang"],             // Vartan - BR
+    "_TZE204_o9gyszw2": [ numEps: 2, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Avatto Zigbee 2-Gang Switch Dimmer"]                          // https://s.click.aliexpress.com/e/_DdmDzJx https://community.hubitat.com/t/ts0601-toggle-not-working/143432?u=kkossev
 ]
 
 def getNumEps() {return config()?.numEps ?: 1}
@@ -354,6 +355,7 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
                 [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_zenj4lxv", deviceJoinName: "Moes ZigBee 2-Gang Dimmer"],               // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
                 [numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_1v1dxkck", deviceJoinName: "Moes ZigBee 3-Gang Dimmer"],               // https://github.com/Koenkk/zigbee-herdsman-converters/blob/23bee5ddfca1f62fc0a03d40fbf788b0b7fe2fc3/src/devices/tuya.ts#L1265
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_w4cryh2i", deviceJoinName: "Moes Zigbee Rotary/Touch Light Dimmer"],   // https://community.hubitat.com/t/re-release-beta-tuya-zigbee-dimmer-module-w-healthstatus/120180/16?u=kkossev
+                [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_o9gyszw2", deviceJoinName: "Avatto ZigBee 2-Gang Dimmer"],             // https://github.com/Koenkk/zigbee2mqtt/issues/22175
             ],
             deviceJoinName: "TS0601 Tuya Dimmer",
             capabilities  : ["SwitchLevel": true],
