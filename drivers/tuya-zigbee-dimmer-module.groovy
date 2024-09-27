@@ -70,7 +70,8 @@ ver 0.6.4  2024/07/22 hhorigian    - added new version of:  TS110E _TZ3210_pagaj
 ver 0.7.0  2024/07/24 kkossev      - TS0601 _TZE200_r32ctezx moved to new TS0601_LERLINK_FAN group; resolved merge conflicts;
 ver 0.7.1  2024/07/29 hhorigian    - added new version of:  TS110E _TZ3210_tkkb1ym8 2 gang Dimmer
 ver 0.7.2  2024/09/02 kkossev      - _TZE200_1agwnems MG-ZD01W 1-Gang Dimmer - inClusters fingerprint correction;
-ver 0.7.3  2024/09/27 kkossev      - (dev.branch) ignoring the min and max brightness for OzSmartThings (_TZE200_1agwnems) dimmer; added TS0601 _TZE204_o9gyszw2 Avatto ZigBee 2-Gang Dimmer; TS0601 _TZE200_p0gzbqct; TS0601 _TZE204_vevc4c6g; TS110E _TZ3210_wdexaypg
+ver 0.7.3  2024/09/27 kkossev      - ignoring the min and max brightness for OzSmartThings (_TZE200_1agwnems) dimmer; added TS0601 _TZE204_o9gyszw2 Avatto ZigBee 2-Gang Dimmer; TS0601 _TZE200_p0gzbqct; TS0601 _TZE204_vevc4c6g; TS110E _TZ3210_wdexaypg
+ver 0.8.0  2024/09/27 kkossev      - (dev.branch)
 *
 *                                   TODO: LED configuration settings
 *                                   TODO: Lonsonho _TZ3210_4ubylghk : bulb type :  https://github.com/zigpy/zha-device-handlers/issues/1415#issuecomment-1062843118
@@ -358,7 +359,7 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
                 [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_zenj4lxv", deviceJoinName: "Moes ZigBee 2-Gang Dimmer"],               // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
                 [numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_1v1dxkck", deviceJoinName: "Moes ZigBee 3-Gang Dimmer"],               // https://github.com/Koenkk/zigbee-herdsman-converters/blob/23bee5ddfca1f62fc0a03d40fbf788b0b7fe2fc3/src/devices/tuya.ts#L1265
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_w4cryh2i", deviceJoinName: "Moes Zigbee Rotary/Touch Light Dimmer"],   // https://community.hubitat.com/t/re-release-beta-tuya-zigbee-dimmer-module-w-healthstatus/120180/16?u=kkossev
-                [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_o9gyszw2", deviceJoinName: "Avatto ZigBee 2-Gang Dimmer"],             // https://github.com/Koenkk/zigbee2mqtt/issues/22175
+                [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_o9gyszw2", deviceJoinName: "Avatto ZigBee 2-Gang Dimmer"],             // https://github.com/Koenkk/zigbee2mqtt/issues/22175#issuecomment-2053713724 https://github.com/Koenkk/zigbee2mqtt/issues/22175
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_p0gzbqct", deviceJoinName: "Moes Zigbee Rotary Dimmer"],               // 
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_vevc4c6g", deviceJoinName: "Tuya touch dimmer"],                       //  https://github.com/Koenkk/zigbee2mqtt/issues/21980
             ],
@@ -1072,7 +1073,7 @@ def parseTuyaCluster( descMap ) {
         case "01" : // Switch1
             handleTuyaClusterSwitchCmd(cmd, value)
             break
-        case "02" : // Brightness1 (switch level state) or countdown for LerlinkFanController
+        case "02" : // Brightness1 (switch level state) (or countdown for LerlinkFanController)
             if (isLerlinkFanController()) {
                 logDebug "parseTuyaCluster: received: LerlinkFanController countdown cmd=${cmd} value=${value}"
                 if (value != 0 ) {
@@ -1081,10 +1082,10 @@ def parseTuyaCluster( descMap ) {
             }
             else {
                 logDebug "parseTuyaCluster: received: Tuya brighntness(level) cmd=${cmd} value=${value}"
-                handleTuyaClusterBrightnessCmd(cmd, value/10 as int)
+                handleTuyaClusterBrightnessCmd(cmd, value / 10 as int)    // 0 ... 1000
             }
             break        
-        case "03" : // Minimum brightness1 or fan speed for LerlinkFanController
+        case "03" : // Minimum brightness1 (or fan speed for LerlinkFanController)
             if (isLerlinkFanController()) {
                 logDebug "parseTuyaCluster: received: LerlinkFanController cmd=${cmd} value=${value}"
                 handleTuyaClusterBrightnessCmd(cmd, value as int)
@@ -1092,7 +1093,7 @@ def parseTuyaCluster( descMap ) {
             else {
                 def switchNumber =  "01"
                 logDebug "parseTuyaCluster: received: minimum brightness switch#${switchNumber} is ${value/10 as int} (raw=${value})"
-                handleTuyaClusterMinBrightnessCmd(cmd, value/10 as int)
+                handleTuyaClusterMinBrightnessCmd(cmd, value / 10 as int)   // 0 ... 1000 default 20 ?
             }
             break
         case "04" : // (04) level for _TZE200_fvldku9h ;  Tuya type of light source for all others?
@@ -1110,7 +1111,7 @@ def parseTuyaCluster( descMap ) {
         case "05" : // Maximum brightness1
             def switchNumber = "01"
             logDebug "parseTuyaCluster: received: maximum brightness switch#${switchNumber} is ${value/10 as int} (raw=${value})"
-            handleTuyaClusterMaxBrightnessCmd(cmd, value/10 as int)
+            handleTuyaClusterMaxBrightnessCmd(cmd, value / 10 as int)
             break
         case "06" : // Countdown1
             def switchNumber = "01"
@@ -1124,17 +1125,17 @@ def parseTuyaCluster( descMap ) {
             break
         case "08" : // Brightness2
             logDebug "parseTuyaCluster: received: Tuya brighntness(level) cmd=${cmd} value=${value}"
-            handleTuyaClusterBrightnessCmd(cmd, value/10 as int)
+            handleTuyaClusterBrightnessCmd(cmd, value / 10 as int)
             break        
         case "09" : // Minimum brightness2
             def switchNumber = "02"
-            logDebug "parseTuyaCluster: received: minimum brightness switch#${switchNumber} is ${value/10 as int} (raw=${value})"
-            handleTuyaClusterMinBrightnessCmd(cmd, value/10 as int)
+            logDebug "parseTuyaCluster: received: minimum brightness switch#${switchNumber} is ${value / 10 as int} (raw=${value})"
+            handleTuyaClusterMinBrightnessCmd(cmd, value / 10 as int)
             break
-        case "0A" : // (10)    // TS0601 Moes dimmer
-            logDebug "parseTuyaCluster: Unknown Tuya dp= ${cmd} fn=${value}"
+        case "0A" : // (10)    // _TZE204_o9gyszw2 switch type 2: 0-Toggle (Flip), 1-State (Sync), 2-Momentary (Button)
+            logDebug "parseTuyaCluster: SwitchType2 Tuya dp= ${cmd} fn=${value}"        // default 0
             break
-        case "0B" : // (11) Maximum brightness2 or power-on status for LerlinkFanController
+        case "0B" : // (11) Maximum brightness2 (or power-on status for LerlinkFanController)
             if (isLerlinkFanController()) {
                 logDebug "parseTuyaCluster: received: LerlinkFanController power-on status cmd=${cmd} value=${value}"
                 String modeName = TS0601PowerOnOptions.options[value as int]
@@ -1145,8 +1146,8 @@ def parseTuyaCluster( descMap ) {
             }
             else {
                 def switchNumber = "02"
-                logDebug "parseTuyaCluster: received: maximum brightness switch#${switchNumber} is ${value/10 as int} (raw=${value})"
-                handleTuyaClusterMaxBrightnessCmd(cmd, value/10 as int)
+                logDebug "parseTuyaCluster: received: maximum brightness switch#${switchNumber} is ${value / 10 as int} (raw=${value})"
+                handleTuyaClusterMaxBrightnessCmd(cmd, value / 10 as int)
             }
             break
         case "0C" : // (12) Countdown2
