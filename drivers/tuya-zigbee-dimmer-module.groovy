@@ -71,7 +71,7 @@ ver 0.7.0  2024/07/24 kkossev      - TS0601 _TZE200_r32ctezx moved to new TS0601
 ver 0.7.1  2024/07/29 hhorigian    - added new version of:  TS110E _TZ3210_tkkb1ym8 2 gang Dimmer
 ver 0.7.2  2024/09/02 kkossev      - _TZE200_1agwnems MG-ZD01W 1-Gang Dimmer - inClusters fingerprint correction;
 ver 0.7.3  2024/09/27 kkossev      - ignoring the min and max brightness for OzSmartThings (_TZE200_1agwnems) dimmer; added TS0601 _TZE204_o9gyszw2 Avatto ZigBee 2-Gang Dimmer; TS0601 _TZE200_p0gzbqct; TS0601 _TZE204_vevc4c6g; TS110E _TZ3210_wdexaypg
-ver 0.7.4  2025/01/04 kkossev      - (dev.branch) adding TS0601 _TZE204_bxoo2swd @djh_wolf
+ver 0.7.4  2025/01/04 kkossev      - (dev.branch) added TS0601 _TZE204_bxoo2swd @djh_wolf; changing  TS0601 _TZE200_r32ctezx fan controller level scaling and ENUM command type @jockeboling
 *
 *                                   TODO: switch type configuration settings for _TZ3210_wdexaypg 'TS110E_LONSONHO_DIMMER'
 *                                   TODO: LED configuration settings
@@ -89,7 +89,7 @@ ver 0.7.4  2025/01/04 kkossev      - (dev.branch) adding TS0601 _TZE204_bxoo2swd
 */
 
 def version() { '0.7.4' }
-def timeStamp() { '2025/01/04 11:14 PM' }
+def timeStamp() { '2025/01/04 11:58 PM' }
 
 @Field static final Boolean _DEBUG = false
 
@@ -966,6 +966,7 @@ def cmdSetLevel(String childDni, value, duration) {
     if (isTS0601()) {
         value = (value*10) as int 
         def dpValHex  = zigbee.convertToHexString(value as int, 8) 
+        def dpType = DP_TYPE_VALUE
         def cmd = childDni[-2..-1]
         def dpCommand = cmd == "01" ? "02" : cmd == "02" ? "08" : cmd == "03" ? "10" : null
         if (isFanController()) {
@@ -974,8 +975,9 @@ def cmdSetLevel(String childDni, value, duration) {
         }
         else if (isLerlinkFanController()) {
             dpCommand = "03"
-            dpValHex  = zigbee.convertToHexString((value/10) as int, 8) 
-            // TODO - check if the dpType is VALUE or ENUM?
+            dpValHex  = zigbee.convertToHexString(value as int, 2) 
+            // dpType is ENUM!
+            dpType = DP_TYPE_ENUM
         }
         logDebug "cmdSetLevel: TS0601: sending cmdSetLevel command=${dpCommand} value=${value} ($dpValHex)"
         cmdsTuya = sendTuyaCommand(dpCommand, DP_TYPE_VALUE, dpValHex)
@@ -1258,8 +1260,14 @@ def handleTuyaClusterSwitchCmd(cmd,value) {
 
 def handleTuyaClusterBrightnessCmd(cmd, value) {
     def switchNumber = cmd == "02" ? "01" : cmd == "08" ? "02" : cmd == "10" ? "03" : "01"
-    scaledValue = valueToLevel(value)
-    logInfo "Brightness ${switchNumber} is ${scaledValue}% (${value})"
+    if (isLerlinkFanController())  {
+        logDebug "handleTuyaClusterBrightnessCmd: Ignoring scaling the ${value} level for LerlinkFanController"
+        scaledValue = value
+    }
+    else {
+        scaledValue = valueToLevel(value)
+        logInfo "Brightness ${switchNumber} is ${scaledValue}% (${value})"
+    }
     if (getNumEps() == 1)  {
         onSwitchLevel(value)
     }
@@ -1392,9 +1400,7 @@ def onSwitchState(value) {
         map.descriptionText = "${device.displayName} was turned ${map.value} [${map.type}]"
     } 
     logInfo "${map.descriptionText}"
-    //logInfo "was turned ${valueText} [${getEventType()}]"
     sendEvent(map)
-    //sendEvent(name: map.name, value: valueText, descriptionText: "${device.displayName} was turned ${valueText}", type: getEventType(), unit: null)
 }
 
 def onSwitchLevel(value) {
@@ -1416,9 +1422,7 @@ def onSwitchLevel(value) {
     }         
     logTrace "onSwitchLevel: Value=${value} level=${level} (value=${value})"
     logInfo "${map.descriptionText}"
-    //logInfo "was set to ${level}% [${getEventType()}]"
     sendEvent(map)
-    //sendEvent(name:"level", value: level, descriptionText:"${device.displayName} was set ${level}%", type: getEventType(), unit: "%")
 }
     
 /*
