@@ -73,6 +73,8 @@ ver 0.7.2  2024/09/02 kkossev      - _TZE200_1agwnems MG-ZD01W 1-Gang Dimmer - i
 ver 0.7.3  2024/09/27 kkossev      - ignoring the min and max brightness for OzSmartThings (_TZE200_1agwnems) dimmer; added TS0601 _TZE204_o9gyszw2 Avatto ZigBee 2-Gang Dimmer; TS0601 _TZE200_p0gzbqct; TS0601 _TZE204_vevc4c6g; TS110E _TZ3210_wdexaypg
 ver 0.7.4  2025/01/04 kkossev      - (dev.branch) added TS0601 _TZE204_bxoo2swd @djh_wolf; changing  TS0601 _TZE200_r32ctezx fan controller level scaling and ENUM command type @jockeboling
 ver 0.7.5  2025/01/26 kkossev      - (dev.branch) added TS0601 _TZE204_hwyydvqm TR-TRON Zigbee 3-Gang Switch Dimmer @Andre
+ver 0.7.6  2025/06/04 hhorigian    - (dev.branch) Fixed On/Off for parent child, turning on/off childs. 
+
 *
 *                                   TODO: switch type configuration settings for _TZ3210_wdexaypg 'TS110E_LONSONHO_DIMMER'
 *                                   TODO: LED configuration settings
@@ -786,6 +788,8 @@ def on() {
     setCmdTimeNow()
     if (isParent()) {
         sendZigbeeCommands(cmdSwitch(indexToChildDni(0), 1))
+        sendZigbeeCommands(cmdSwitch(indexToChildDni(1), 1))
+
     } else {
         parent?.doActions( parent?.cmdSwitch(device.deviceNetworkId, 1) )
     }
@@ -797,6 +801,7 @@ def off() {
     getDW().scheduleCommandTimeoutCheck()
     if (isParent()) {
         sendZigbeeCommands(cmdSwitch(indexToChildDni(0), 0))
+        sendZigbeeCommands(cmdSwitch(indexToChildDni(1), 0))        
     } else {
         parent?.doActions( parent?.cmdSwitch(device.deviceNetworkId, 0) )
     }
