@@ -71,7 +71,11 @@ ver 0.7.0  2024/07/24 kkossev      - TS0601 _TZE200_r32ctezx moved to new TS0601
 ver 0.7.1  2024/07/29 hhorigian    - added new version of:  TS110E _TZ3210_tkkb1ym8 2 gang Dimmer
 ver 0.7.2  2024/09/02 kkossev      - _TZE200_1agwnems MG-ZD01W 1-Gang Dimmer - inClusters fingerprint correction;
 ver 0.7.3  2024/09/27 kkossev      - ignoring the min and max brightness for OzSmartThings (_TZE200_1agwnems) dimmer; added TS0601 _TZE204_o9gyszw2 Avatto ZigBee 2-Gang Dimmer; TS0601 _TZE200_p0gzbqct; TS0601 _TZE204_vevc4c6g; TS110E _TZ3210_wdexaypg
+ver 0.7.4  2025/01/04 kkossev      - added TS0601 _TZE204_bxoo2swd @djh_wolf; changing  TS0601 _TZE200_r32ctezx fan controller level scaling and ENUM command type @jockeboling
+ver 0.7.5  2025/01/26 kkossev      - added TS0601 _TZE204_hwyydvqm TR-TRON Zigbee 3-Gang Switch Dimmer @Andre
+ver 0.7.6  2025/07/12 kkossev      - added TS0601 _TZE200_vizxbhco Moes 3-gang dimmer @Alejandro 
 *
+*                                   TODO: switch type configuration settings for _TZ3210_wdexaypg 'TS110E_LONSONHO_DIMMER'
 *                                   TODO: LED configuration settings
 *                                   TODO: Lonsonho _TZ3210_4ubylghk : bulb type :  https://github.com/zigpy/zha-device-handlers/issues/1415#issuecomment-1062843118
 *                                   TODO: Lonsonho _TZ3210_pagajpog : when momentarily push switch 1. It is like it doesn't recognize it as pressing the switch, but pressing it again can cause it to go into pairing mode. @user3633
@@ -86,8 +90,8 @@ ver 0.7.3  2024/09/27 kkossev      - ignoring the min and max brightness for OzS
 *
 */
 
-def version() { "0.7.3" }
-def timeStamp() {"2024/09/27 7:44 AM"}
+def version() { '0.7.6' }
+def timeStamp() { '2025/07/12 9:12 AM' }
 
 @Field static final Boolean _DEBUG = false
 
@@ -266,6 +270,9 @@ boolean isOzSmartThings() { device.getDataValue("manufacturer") == "_TZE200_1agw
     "_TZE200_p0gzbqct": [ numEps: 1, model: "TS0601", inClusters: "0000,0004,0005,EF00", joinName: "Moes Zigbee Rotary Dimmer"],                                  // https://s.click.aliexpress.com/e/_DEZTclF https://community.hubitat.com/t/re-release-tuya-zigbee-dimmer-module-w-healthstatus/120180/16?u=kkossev
     "_TZE204_vevc4c6g": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Tuya Touch Dimmer"],                                          // https://www.rtx24.pl/sciemniacz-dotykowy-1obw-bi-zigbee-tuya-rtx-sh-p-766.html 
     "_TZ3210_wdexaypg": [ numEps: 2, model: "TS110E", inClusters: "0004,0005,0003,0006,0008,EF00", joinName: "Tuya Zigbee 2-Gang Dimmer"],                        // https://community.hubitat.com/t/driver-support-for-zigbee-model-ts110e-zigbee-manufacturer-tz3210-ngqk6jia/99817/17?u=kkossev
+    "_TZE204_bxoo2swd": [ numEps: 2, model: "TS0601", inClusters: "0000,0004,0005,EF00",          joinName: "Moes zm-105b-m dimmer 2CH"],                         // https://community.hubitat.com/t/looking-for-small-zigbee-dimmer-module/131239/7?u=kkossev
+    "_TZE204_hwyydvqm": [ numEps: 3, model: "TS0601", inClusters: "0000,0004,0005,EF00", joinName: "TR-TRON Zigbee 3-Gang Switch Dimmer"],                        // 
+    "_TZE200_vizxbhco": [ numEps: 3, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "MOES 3-Gang Switch Dimmer"],                                  // https://community.hubitat.com/t/moes-smart-switch-touch-dimmer-driver/154996?u=kkossev
 ]
 
 def getNumEps() {return config()?.numEps ?: 1}
@@ -361,6 +368,9 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
                 [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_o9gyszw2", deviceJoinName: "Avatto ZigBee 2-Gang Dimmer"],             // https://github.com/Koenkk/zigbee2mqtt/issues/22175#issuecomment-2053713724 https://github.com/Koenkk/zigbee2mqtt/issues/22175
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_p0gzbqct", deviceJoinName: "Moes Zigbee Rotary Dimmer"],               // 
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_vevc4c6g", deviceJoinName: "Tuya touch dimmer"],                       //  https://github.com/Koenkk/zigbee2mqtt/issues/21980
+                [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_bxoo2swd", deviceJoinName: "Moes zm-105b-m dimmer 2CH"],               // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
+                [numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_hwyydvqm", deviceJoinName: "TR-TRON Zigbee 3-Gang Switch Dimmer"],     // @Andre Gaspar
+                [numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_vizxbhco", deviceJoinName: "MOES Zigbee 3-Gang Switch Dimmer"],        // @Alejandro
             ],
             deviceJoinName: "TS0601 Tuya Dimmer",
             capabilities  : ["SwitchLevel": true],
@@ -962,6 +972,7 @@ def cmdSetLevel(String childDni, value, duration) {
     if (isTS0601()) {
         value = (value*10) as int 
         def dpValHex  = zigbee.convertToHexString(value as int, 8) 
+        def dpType = DP_TYPE_VALUE
         def cmd = childDni[-2..-1]
         def dpCommand = cmd == "01" ? "02" : cmd == "02" ? "08" : cmd == "03" ? "10" : null
         if (isFanController()) {
@@ -970,8 +981,9 @@ def cmdSetLevel(String childDni, value, duration) {
         }
         else if (isLerlinkFanController()) {
             dpCommand = "03"
-            dpValHex  = zigbee.convertToHexString((value/10) as int, 8) 
-            // TODO - check if the dpType is VALUE or ENUM?
+            dpValHex  = zigbee.convertToHexString(value as int, 2) 
+            // dpType is ENUM!
+            dpType = DP_TYPE_ENUM
         }
         logDebug "cmdSetLevel: TS0601: sending cmdSetLevel command=${dpCommand} value=${value} ($dpValHex)"
         cmdsTuya = sendTuyaCommand(dpCommand, DP_TYPE_VALUE, dpValHex)
@@ -1254,8 +1266,14 @@ def handleTuyaClusterSwitchCmd(cmd,value) {
 
 def handleTuyaClusterBrightnessCmd(cmd, value) {
     def switchNumber = cmd == "02" ? "01" : cmd == "08" ? "02" : cmd == "10" ? "03" : "01"
-    scaledValue = valueToLevel(value)
-    logInfo "Brightness ${switchNumber} is ${scaledValue}% (${value})"
+    if (isLerlinkFanController())  {
+        logDebug "handleTuyaClusterBrightnessCmd: Ignoring scaling the ${value} level for LerlinkFanController"
+        scaledValue = value
+    }
+    else {
+        scaledValue = valueToLevel(value)
+        logInfo "Brightness ${switchNumber} is ${scaledValue}% (${value})"
+    }
     if (getNumEps() == 1)  {
         onSwitchLevel(value)
     }
@@ -1388,9 +1406,7 @@ def onSwitchState(value) {
         map.descriptionText = "${device.displayName} was turned ${map.value} [${map.type}]"
     } 
     logInfo "${map.descriptionText}"
-    //logInfo "was turned ${valueText} [${getEventType()}]"
     sendEvent(map)
-    //sendEvent(name: map.name, value: valueText, descriptionText: "${device.displayName} was turned ${valueText}", type: getEventType(), unit: null)
 }
 
 def onSwitchLevel(value) {
@@ -1412,9 +1428,7 @@ def onSwitchLevel(value) {
     }         
     logTrace "onSwitchLevel: Value=${value} level=${level} (value=${value})"
     logInfo "${map.descriptionText}"
-    //logInfo "was set to ${level}% [${getEventType()}]"
     sendEvent(map)
-    //sendEvent(name:"level", value: level, descriptionText:"${device.displayName} was set ${level}%", type: getEventType(), unit: "%")
 }
     
 /*
