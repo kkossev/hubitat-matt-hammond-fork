@@ -4,6 +4,7 @@ Hubitat Elevation Driver for
 Tuya Zigbee dimmer modules (1-Gang and 2-Gang)
 
     https://github.com/matt-hammond-001/hubitat-code
+    https://community.hubitat.com/t/re-release-tuya-zigbee-dimmer-module-w-healthstatus/120180/1 
 
 -----------------------------------------------------------------------------
 This code is licensed as follows:
@@ -74,6 +75,7 @@ ver 0.7.3  2024/09/27 kkossev      - ignoring the min and max brightness for OzS
 ver 0.7.4  2025/01/04 kkossev      - added TS0601 _TZE204_bxoo2swd @djh_wolf; changing  TS0601 _TZE200_r32ctezx fan controller level scaling and ENUM command type @jockeboling
 ver 0.7.5  2025/01/26 kkossev      - added TS0601 _TZE204_hwyydvqm TR-TRON Zigbee 3-Gang Switch Dimmer @Andre
 ver 0.7.6  2025/07/12 kkossev      - added TS0601 _TZE200_vizxbhco Moes 3-gang dimmer @Alejandro 
+ver 0.7.7  2025/10/04 kkossev      - added TS0601 _TZE204_znvwzxkq Zemismart Zigbee 3-Gang Switch Dimmer @HubJay 
 *
 *                                   TODO: switch type configuration settings for _TZ3210_wdexaypg 'TS110E_LONSONHO_DIMMER'
 *                                   TODO: LED configuration settings
@@ -90,8 +92,8 @@ ver 0.7.6  2025/07/12 kkossev      - added TS0601 _TZE200_vizxbhco Moes 3-gang d
 *
 */
 
-def version() { '0.7.6' }
-def timeStamp() { '2025/07/12 9:12 AM' }
+def version() { '0.7.7' }
+def timeStamp() { '2025/10/04 10:16 AM' }
 
 @Field static final Boolean _DEBUG = false
 
@@ -273,6 +275,8 @@ boolean isOzSmartThings() { device.getDataValue("manufacturer") == "_TZE200_1agw
     "_TZE204_bxoo2swd": [ numEps: 2, model: "TS0601", inClusters: "0000,0004,0005,EF00",          joinName: "Moes zm-105b-m dimmer 2CH"],                         // https://community.hubitat.com/t/looking-for-small-zigbee-dimmer-module/131239/7?u=kkossev
     "_TZE204_hwyydvqm": [ numEps: 3, model: "TS0601", inClusters: "0000,0004,0005,EF00", joinName: "TR-TRON Zigbee 3-Gang Switch Dimmer"],                        // 
     "_TZE200_vizxbhco": [ numEps: 3, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "MOES 3-Gang Switch Dimmer"],                                  // https://community.hubitat.com/t/moes-smart-switch-touch-dimmer-driver/154996?u=kkossev
+    "_TZE204_znvwzxkq": [ numEps: 3, model: "TS0601", inClusters: "0000,0004,0005,EF00", joinName: "Zemismart Zigbee 3-Gang Switch Dimmer"],                      // https://community.hubitat.com/t/re-release-tuya-zigbee-dimmer-module-w-healthstatus/120180/54?u=kkossev
+    // add new dimmers entries here
 ]
 
 def getNumEps() {return config()?.numEps ?: 1}
@@ -280,6 +284,7 @@ def isParent()  {return getParent() == null }
 def isChild()   {return getParent() != null }
 def config() { return modelConfigs[device.getDataValue("manufacturer")] }
 
+// add new dimmers entries also here when the corect device group was found and tested
 @Field static final Map deviceProfilesV2 = [
     "TS110F_DIMMER"  : [
             description   : "TS110F Tuya Dimmers",
@@ -371,6 +376,7 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
                 [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_bxoo2swd", deviceJoinName: "Moes zm-105b-m dimmer 2CH"],               // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
                 [numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_hwyydvqm", deviceJoinName: "TR-TRON Zigbee 3-Gang Switch Dimmer"],     // @Andre Gaspar
                 [numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_vizxbhco", deviceJoinName: "MOES Zigbee 3-Gang Switch Dimmer"],        // @Alejandro
+                [numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_znvwzxkq", deviceJoinName: "Zemismart Zigbee 3-Gang Switch Dimmer"],   // @HubJay
             ],
             deviceJoinName: "TS0601 Tuya Dimmer",
             capabilities  : ["SwitchLevel": true],
