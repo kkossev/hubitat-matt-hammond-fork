@@ -4,6 +4,7 @@ Hubitat Elevation Driver for
 Tuya Zigbee dimmer modules (1-Gang and 2-Gang)
 
     https://github.com/matt-hammond-001/hubitat-code
+    https://community.hubitat.com/t/re-release-tuya-zigbee-dimmer-module-w-healthstatus/120180/1 
 
 -----------------------------------------------------------------------------
 This code is licensed as follows:
@@ -74,6 +75,8 @@ ver 0.7.3  2024/09/27 kkossev      - ignoring the min and max brightness for OzS
 ver 0.7.4  2025/01/04 kkossev      - added TS0601 _TZE204_bxoo2swd @djh_wolf; changing  TS0601 _TZE200_r32ctezx fan controller level scaling and ENUM command type @jockeboling
 ver 0.7.5  2025/01/26 kkossev      - added TS0601 _TZE204_hwyydvqm TR-TRON Zigbee 3-Gang Switch Dimmer @Andre
 ver 0.7.6  2025/07/12 kkossev      - added TS0601 _TZE200_vizxbhco Moes 3-gang dimmer @Alejandro 
+ver 0.7.7  2025/10/04 kkossev      - added TS0601 _TZE204_znvwzxkq Zemismart Zigbee 3-Gang Switch Dimmer @HubJay 
+ver 0.7.8  2025/11/11 kkossev      - (dev. branch) added TS0601 _TZE204_68utemio - thanks@mtate; added TS0601 _TZE204_lawxy9e2 _TZE200_lawxy9e2 Tuya Fan and Light switch @wdguezv 
 *
 *                                   TODO: switch type configuration settings for _TZ3210_wdexaypg 'TS110E_LONSONHO_DIMMER'
 *                                   TODO: LED configuration settings
@@ -90,8 +93,8 @@ ver 0.7.6  2025/07/12 kkossev      - added TS0601 _TZE200_vizxbhco Moes 3-gang d
 *
 */
 
-def version() { '0.7.6' }
-def timeStamp() { '2025/07/12 9:12 AM' }
+def version() { '0.7.8' }
+def timeStamp() { '2025/11/11 9:40 PM' }
 
 @Field static final Boolean _DEBUG = false
 
@@ -253,6 +256,9 @@ boolean isOzSmartThings() { device.getDataValue("manufacturer") == "_TZE200_1agw
     "_TZE200_drs6j6m5": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "Lifud Model LF-AAZ030-0750-42" ],                    // https://community.hubitat.com/t/tuya-moes-1-2-3-gang-dimmer/104596/25?u=kkossev
     "_TZE200_fvldku9h": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "Tuya Fan Switch" ] ,                                 // https://www.aliexpress.com/item/4001242513879.html
     "_TZE200_r32ctezx": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "Lerlink T2-Z67/T2-W67 Fan Switch" ],                 // https://github.com/isakharov/zigbee-herdsman-converters/blob/0bffc49faf69244711677a5735f54d8dd8ea8f7c/devices/tuya.js#L4117-L4143                               // https://www.aliexpress.us/item/3256804518783061.html https://github.com/Koenkk/zigbee2mqtt/issues/12793
+    "_TZE200_lawxy9e2": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "Tuya Fan and Light Switch" ],                        // 
+    "_TZE204_lawxy9e2": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "Tuya Fan and Light Switch" ],                        // 
+    "_TZE284_lawxy9e2": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "Tuya Fan and Light Switch" ],                        // 
     "_TZE200_3p5ydos3": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "BSEED Zigbee Dimmer" ],                              // https://www.bseed.com/collections/zigbee-series/products/bseed-eu-russia-new-zigbee-touch-wifi-light-dimmer-smart-switch
     "_TZE200_e3oitdyu": [ numEps: 2, model: "TS0601", inClusters: "0000,0004,0005,EF00",          joinName: "Moes ZigBee Dimmer Switch 2CH"],                     // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
     "_TZ3210_k1msuvg6": [ numEps: 1, model: "TS110E", inClusters: "0004,0005,0003,0006,0008,EF00,0000", joinName: "Girier Zigbee 1-Gang Dimmer module"],          // https://community.hubitat.com/t/girier-tuya-zigbee-3-0-light-switch-module-smart-diy-breaker-1-2-3-4-gang-supports-2-way-control/104546/36?u=kkossev
@@ -273,6 +279,9 @@ boolean isOzSmartThings() { device.getDataValue("manufacturer") == "_TZE200_1agw
     "_TZE204_bxoo2swd": [ numEps: 2, model: "TS0601", inClusters: "0000,0004,0005,EF00",          joinName: "Moes zm-105b-m dimmer 2CH"],                         // https://community.hubitat.com/t/looking-for-small-zigbee-dimmer-module/131239/7?u=kkossev
     "_TZE204_hwyydvqm": [ numEps: 3, model: "TS0601", inClusters: "0000,0004,0005,EF00", joinName: "TR-TRON Zigbee 3-Gang Switch Dimmer"],                        // 
     "_TZE200_vizxbhco": [ numEps: 3, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "MOES 3-Gang Switch Dimmer"],                                  // https://community.hubitat.com/t/moes-smart-switch-touch-dimmer-driver/154996?u=kkossev
+    "_TZE204_znvwzxkq": [ numEps: 3, model: "TS0601", inClusters: "0000,0004,0005,EF00", joinName: "Zemismart Zigbee 3-Gang Switch Dimmer"],                      // https://community.hubitat.com/t/re-release-tuya-zigbee-dimmer-module-w-healthstatus/120180/54?u=kkossev
+    "_TZE204_68utemio": [ numEps: 1, model: "TS0601", inClusters: "0000,0004,0005,EF00", joinName: "Zemismart Zigbee 1-Gang Switch Dimmer"],                      // @mtate : https://community.hubitat.com/t/re-release-tuya-zigbee-dimmer-module-w-healthstatus/120180/60?u=kkossev
+    // add new dimmers entries here
 ]
 
 def getNumEps() {return config()?.numEps ?: 1}
@@ -280,6 +289,7 @@ def isParent()  {return getParent() == null }
 def isChild()   {return getParent() != null }
 def config() { return modelConfigs[device.getDataValue("manufacturer")] }
 
+// add new dimmers entries also here when the corect device group was found and tested
 @Field static final Map deviceProfilesV2 = [
     "TS110F_DIMMER"  : [
             description   : "TS110F Tuya Dimmers",
@@ -371,6 +381,8 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
                 [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_bxoo2swd", deviceJoinName: "Moes zm-105b-m dimmer 2CH"],               // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
                 [numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_hwyydvqm", deviceJoinName: "TR-TRON Zigbee 3-Gang Switch Dimmer"],     // @Andre Gaspar
                 [numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_vizxbhco", deviceJoinName: "MOES Zigbee 3-Gang Switch Dimmer"],        // @Alejandro
+                [numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_znvwzxkq", deviceJoinName: "Zemismart Zigbee 3-Gang Switch Dimmer"],   // @HubJay
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_68utemio", deviceJoinName: "Zemismart Zigbee 1-Gang Switch Dimmer"],   // @MTate
             ],
             deviceJoinName: "TS0601 Tuya Dimmer",
             capabilities  : ["SwitchLevel": true],
@@ -396,7 +408,11 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
             description   : "TS0601 LERLINK Fan Switch",
             models        : ["TS0601"],
             fingerprints  : [
-                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_r32ctezx", deviceJoinName: "Lerlink T2-Z67/T2-W67 Fan Switch"]                         // https://www.aliexpress.us/item/3256804518783061.html https://github.com/Koenkk/zigbee2mqtt/issues/12793 https://github.com/isakharov/zigbee-herdsman-converters/blob/0bffc49faf69244711677a5735f54d8dd8ea8f7c/devices/tuya.js#L4117-L4143 
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_r32ctezx", deviceJoinName: "Lerlink T2-Z67/T2-W67 Fan Switch"],       // https://www.aliexpress.us/item/3256804518783061.html https://github.com/Koenkk/zigbee2mqtt/issues/12793 https://github.com/isakharov/zigbee-herdsman-converters/blob/0bffc49faf69244711677a5735f54d8dd8ea8f7c/devices/tuya.js#L4117-L4143 
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_lawxy9e2", deviceJoinName: "Liwokit Fan and Light Switch"],              // https://github.com/sprut/Hub/issues/2992#issue-2102096926
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_lawxy9e2", deviceJoinName: "Tuya Fan and Light Switch"],              // https://community.hubitat.com/t/re-release-tuya-zigbee-dimmer-module-w-healthstatus/120180/61?u=kkossev 
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE284_lawxy9e2", deviceJoinName: "Tuya Fan and Light Switch"]               // https://community.hubitat.com/t/re-release-tuya-zigbee-dimmer-module-w-healthstatus/120180/61?u=kkossev 
+                // Tuya DPs 1-state (bool?) 3-fan speed (0..4) 5-status indication (bool?) B-power on behaviour C-?
             ],
             deviceJoinName: "TS0601 LERLINK Fan Switch",
             capabilities  : ["SwitchLevel": false],
