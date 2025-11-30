@@ -76,7 +76,8 @@ ver 0.7.4  2025/01/04 kkossev      - added TS0601 _TZE204_bxoo2swd @djh_wolf; ch
 ver 0.7.5  2025/01/26 kkossev      - added TS0601 _TZE204_hwyydvqm TR-TRON Zigbee 3-Gang Switch Dimmer @Andre
 ver 0.7.6  2025/07/12 kkossev      - added TS0601 _TZE200_vizxbhco Moes 3-gang dimmer @Alejandro 
 ver 0.7.7  2025/10/04 kkossev      - added TS0601 _TZE204_znvwzxkq Zemismart Zigbee 3-Gang Switch Dimmer @HubJay 
-ver 0.7.8  2025/11/11 kkossev      - (dev. branch) added TS0601 _TZE204_68utemio - thanks@mtate; added TS0601 _TZE204_lawxy9e2 _TZE200_lawxy9e2 Tuya Fan and Light switch @wdguezv 
+ver 0.7.8  2025/11/11 kkossev      - added TS0601 _TZE204_68utemio - thanks@mtate; added TS0601 _TZE204_lawxy9e2 _TZE200_lawxy9e2 Tuya Fan and Light switch @wdguezv 
+ver 0.7.9  2025/11/30 kkossev      - (dev. branch) added TS0601 _TZE284_e1hutaaj Zemismart Zigbee Touch Fan Controller @dazpad
 *
 *                                   TODO: switch type configuration settings for _TZ3210_wdexaypg 'TS110E_LONSONHO_DIMMER'
 *                                   TODO: LED configuration settings
@@ -93,8 +94,8 @@ ver 0.7.8  2025/11/11 kkossev      - (dev. branch) added TS0601 _TZE204_68utemio
 *
 */
 
-def version() { '0.7.8' }
-def timeStamp() { '2025/11/11 9:40 PM' }
+def version() { '0.7.9' }
+def timeStamp() { '2025/11/30 9:15 AM' }
 
 @Field static final Boolean _DEBUG = false
 
@@ -281,6 +282,8 @@ boolean isOzSmartThings() { device.getDataValue("manufacturer") == "_TZE200_1agw
     "_TZE200_vizxbhco": [ numEps: 3, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "MOES 3-Gang Switch Dimmer"],                                  // https://community.hubitat.com/t/moes-smart-switch-touch-dimmer-driver/154996?u=kkossev
     "_TZE204_znvwzxkq": [ numEps: 3, model: "TS0601", inClusters: "0000,0004,0005,EF00", joinName: "Zemismart Zigbee 3-Gang Switch Dimmer"],                      // https://community.hubitat.com/t/re-release-tuya-zigbee-dimmer-module-w-healthstatus/120180/54?u=kkossev
     "_TZE204_68utemio": [ numEps: 1, model: "TS0601", inClusters: "0000,0004,0005,EF00", joinName: "Zemismart Zigbee 1-Gang Switch Dimmer"],                      // @mtate : https://community.hubitat.com/t/re-release-tuya-zigbee-dimmer-module-w-healthstatus/120180/60?u=kkossev
+    "_TZE204_e1hutaaj": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Yagusmart Zigbee Fan Switch"],                                // https://www.aliexpress.us/item/3256807257541803.html https://github.com/Koenkk/zigbee2mqtt/issues/24451 
+    "_TZE284_e1hutaaj": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Zemismart Zigbee Touch Fan Controller"],                      // https://community.hubitat.com/t/zemismart-zigbee-touch-fan-controller-driver/159236 
     // add new dimmers entries here
 ]
 
@@ -395,7 +398,9 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
             description   : "TS0601 Fan Switch",
             models        : ["TS0601"],
             fingerprints  : [
-                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_fvldku9h", deviceJoinName: "Tuya Fan Switch"]                         // https://www.aliexpress.com/item/4001242513879.html
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_fvldku9h", deviceJoinName: "Tuya Fan Switch"],                        // https://www.aliexpress.com/item/4001242513879.html
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_e1hutaaj", deviceJoinName: "Yagusmart Zigbee Fan Switch"],            // https://www.aliexpress.us/item/3256807257541803.html https://github.com/Koenkk/zigbee2mqtt/issues/24451 
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE284_e1hutaaj", deviceJoinName: "Zemismart Zigbee Touch Fan Controller"]   // https://community.hubitat.com/t/zemismart-zigbee-touch-fan-controller-driver/159236 
             ],
             deviceJoinName: "TS0601 Fan Switch",
             capabilities  : ["SwitchLevel": false],
@@ -1101,7 +1106,7 @@ def parseTuyaCluster( descMap ) {
             handleTuyaClusterSwitchCmd(cmd, value)
             break
         case "02" : // Brightness1 (switch level state) (or countdown for LerlinkFanController)
-            if (isLerlinkFanController()) {
+            if (isLerlinkFanController() || isFanController()) {
                 logDebug "parseTuyaCluster: received: LerlinkFanController countdown cmd=${cmd} value=${value}"
                 if (value != 0 ) {
                     stopCountdown(cmd, value)
@@ -1163,7 +1168,7 @@ def parseTuyaCluster( descMap ) {
             logDebug "parseTuyaCluster: SwitchType2 Tuya dp= ${cmd} fn=${value}"        // default 0
             break
         case "0B" : // (11) Maximum brightness2 (or power-on status for LerlinkFanController)
-            if (isLerlinkFanController()) {
+            if (isLerlinkFanController() || isFanController()) {
                 logDebug "parseTuyaCluster: received: LerlinkFanController power-on status cmd=${cmd} value=${value}"
                 String modeName = TS0601PowerOnOptions.options[value as int]
                 String description = "Power-On mode is $modeName"
@@ -1178,12 +1183,23 @@ def parseTuyaCluster( descMap ) {
             }
             break
         case "0C" : // (12) Countdown2
-            def switchNumber = "02"
-            logDebug "Countdown ${switchNumber} is ${value}s"
-            if (value != 0 ) {
-                stopCountdown(cmd, value)
+            if (isFanController()) {
+                logDebug "parseTuyaCluster: received: FanController indicator cmd=${cmd} value=${value}"
+            }
+            else {
+                def switchNumber = "02"
+                logDebug "Countdown ${switchNumber} is ${value}s"
+                if (value != 0 ) {
+                    stopCountdown(cmd, value)
+                }
             }
             break
+        case "0D" : // (13)
+            if (isFanController()) {
+                logDebug "parseTuyaCluster: received: backlight_switch cmd=${cmd} value=${value}"
+            } else {
+                logDebug "parseTuyaCluster: Unknown Tuya dp= ${cmd} fn=${value}"
+            }
         case "0E" : // (14)
             //logInfo "Power-on Status Setting is ${value}"
             String modeName = TS0601PowerOnOptions.options[value as int]
@@ -1234,6 +1250,12 @@ def parseTuyaCluster( descMap ) {
             break
         case "40" : // (64)
             logDebug "parseTuyaCluster: Unknown Tuya dp= ${cmd} fn=${value}"
+            break
+        case "68" : // (104)  // https://github.com/Koenkk/zigbee2mqtt/issues/24451 
+            logDebug "parseTuyaCluster: fan controller child_lock Tuya dp= ${cmd} fn=${value}"
+            break
+        case "69" : // (105)
+            logDebug "parseTuyaCluster: fan controller minimum_speed Tuya dp= ${cmd} fn=${value}"
             break
         default :
             logWarn "parseTuyaCluster: UNHANDLED Tuya cmd=${cmd} value=${value}"
