@@ -77,7 +77,8 @@ ver 0.7.5  2025/01/26 kkossev      - added TS0601 _TZE204_hwyydvqm TR-TRON Zigbe
 ver 0.7.6  2025/07/12 kkossev      - added TS0601 _TZE200_vizxbhco Moes 3-gang dimmer @Alejandro 
 ver 0.7.7  2025/10/04 kkossev      - added TS0601 _TZE204_znvwzxkq Zemismart Zigbee 3-Gang Switch Dimmer @HubJay 
 ver 0.7.8  2025/11/11 kkossev      - added TS0601 _TZE204_68utemio - thanks@mtate; added TS0601 _TZE204_lawxy9e2 _TZE200_lawxy9e2 Tuya Fan and Light switch @wdguezv 
-ver 0.7.9  2025/11/30 kkossev      - (dev. branch) added TS0601 _TZE284_e1hutaaj Zemismart Zigbee Touch Fan Controller @dazpad
+ver 0.7.9  2025/11/30 kkossev      - added TS0601 _TZE284_e1hutaaj Zemismart Zigbee Touch Fan Controller @dazpad
+ver 0.8.0  2026/03/30 kkossev      - added TS0601 _TZE284_jtbgusdc and _TZE284_nqqylykc AVATTO dimmers -thanks @callumgw 
 *
 *                                   TODO: switch type configuration settings for _TZ3210_wdexaypg 'TS110E_LONSONHO_DIMMER'
 *                                   TODO: LED configuration settings
@@ -94,8 +95,8 @@ ver 0.7.9  2025/11/30 kkossev      - (dev. branch) added TS0601 _TZE284_e1hutaaj
 *
 */
 
-def version() { '0.7.9' }
-def timeStamp() { '2025/11/30 9:15 AM' }
+def version() { '0.8.0' }
+def timeStamp() { '2026/03/30 7:38 AM' }
 
 @Field static final Boolean _DEBUG = false
 
@@ -284,6 +285,8 @@ boolean isOzSmartThings() { device.getDataValue("manufacturer") == "_TZE200_1agw
     "_TZE204_68utemio": [ numEps: 1, model: "TS0601", inClusters: "0000,0004,0005,EF00", joinName: "Zemismart Zigbee 1-Gang Switch Dimmer"],                      // @mtate : https://community.hubitat.com/t/re-release-tuya-zigbee-dimmer-module-w-healthstatus/120180/60?u=kkossev
     "_TZE204_e1hutaaj": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Yagusmart Zigbee Fan Switch"],                                // https://www.aliexpress.us/item/3256807257541803.html https://github.com/Koenkk/zigbee2mqtt/issues/24451 
     "_TZE284_e1hutaaj": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000", joinName: "Zemismart Zigbee Touch Fan Controller"],                      // https://community.hubitat.com/t/zemismart-zigbee-touch-fan-controller-driver/159236 
+    "_TZE284_nqqylykc": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "Avatto Zigbee 1-Gang Dimmer module" ],               // Avatto 
+    "_TZE284_jtbgusdc": [ numEps: 2, model: "TS0601", inClusters: "0004,0005,EF00,0000,ED00",     joinName: "Avatto Zigbee 2-Gang Dimmer module" ],               // Avatto    
     // add new dimmers entries here
 ]
 
@@ -386,6 +389,8 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
                 [numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE200_vizxbhco", deviceJoinName: "MOES Zigbee 3-Gang Switch Dimmer"],        // @Alejandro
                 [numEps: 3, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_znvwzxkq", deviceJoinName: "Zemismart Zigbee 3-Gang Switch Dimmer"],   // @HubJay
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0000,0004,0005,EF00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE204_68utemio", deviceJoinName: "Zemismart Zigbee 1-Gang Switch Dimmer"],   // @MTate
+                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE284_nqqylykc", deviceJoinName: "Avatto ZigBee 1-Gang Dimmer"],             // https://community.hubitat.com/t/re-release-tuya-zigbee-dimmer-module-w-healthstatus/120180/69?u=kkossev
+                [numEps: 2, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000,ED00", outClusters:"0019,000A", model:"TS0601", manufacturer:"_TZE284_jtbgusdc", deviceJoinName: "Avatto ZigBee 2-Gang Dimmer"],        // @callumgw              
             ],
             deviceJoinName: "TS0601 Tuya Dimmer",
             capabilities  : ["SwitchLevel": true],
