@@ -79,6 +79,7 @@ ver 0.7.7  2025/10/04 kkossev      - added TS0601 _TZE204_znvwzxkq Zemismart Zig
 ver 0.7.8  2025/11/11 kkossev      - added TS0601 _TZE204_68utemio - thanks@mtate; added TS0601 _TZE204_lawxy9e2 _TZE200_lawxy9e2 Tuya Fan and Light switch @wdguezv 
 ver 0.7.9  2025/11/30 kkossev      - added TS0601 _TZE284_e1hutaaj Zemismart Zigbee Touch Fan Controller @dazpad
 ver 0.8.0  2026/03/30 kkossev      - added TS0601 _TZE284_jtbgusdc and _TZE284_nqqylykc AVATTO dimmers -thanks @callumgw 
+ver 0.8.1  2026/04/27 kkossev      - bugfix: NumberFormatException for hex string endpoint ID (GLEDOPTO GL-SD-001P) @jw970065;
 *
 *                                   TODO: switch type configuration settings for _TZ3210_wdexaypg 'TS110E_LONSONHO_DIMMER'
 *                                   TODO: LED configuration settings
@@ -95,8 +96,8 @@ ver 0.8.0  2026/03/30 kkossev      - added TS0601 _TZE284_jtbgusdc and _TZE284_n
 *
 */
 
-def version() { '0.8.0' }
-def timeStamp() { '2026/03/30 7:38 AM' }
+def version() { '0.8.1' }
+def timeStamp() { '2026/04/27 7:38 AM' }
 
 @Field static final Boolean _DEBUG = false
 
@@ -1540,7 +1541,7 @@ def getChildByEndpointId(endpointId) {
         logTrace "getChildByEndpointId(${endpointId}) returning getChildDevice: ${cd} (childDNI=${endpointIdToChildDni(endpointId)})"
         if (cd == null) {
             // try obtaining the child device from the list ... in case the parent DNI was changed!
-            cd =  getChildDevices()[(endpointId as int) -1]
+            cd =  getChildDevices()[Integer.parseInt(endpointId, 16) - 1]
             logTrace "parent DNI was changed... cd=${cd}"
         }
         return cd
