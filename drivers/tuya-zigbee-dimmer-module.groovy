@@ -79,7 +79,7 @@ ver 0.7.7  2025/10/04 kkossev      - added TS0601 _TZE204_znvwzxkq Zemismart Zig
 ver 0.7.8  2025/11/11 kkossev      - added TS0601 _TZE204_68utemio - thanks@mtate; added TS0601 _TZE204_lawxy9e2 _TZE200_lawxy9e2 Tuya Fan and Light switch @wdguezv 
 ver 0.7.9  2025/11/30 kkossev      - added TS0601 _TZE284_e1hutaaj Zemismart Zigbee Touch Fan Controller @dazpad
 ver 0.8.0  2026/03/30 kkossev      - added TS0601 _TZE284_jtbgusdc and _TZE284_nqqylykc AVATTO dimmers -thanks @callumgw 
-ver 0.8.1  2026/04/27 kkossev      - bugfix: NumberFormatException for hex string endpoint ID (GLEDOPTO GL-SD-001P) @jw970065;
+ver 0.8.1  2026/04/28 kkossev      - bugfix: NumberFormatException for hex string endpoint ID (GLEDOPTO GL-SD-001P) @jw970065; added GLEDOPTO_DIMMER profile for GL-SD-001/001P/003P/301P; fixed on/off/toggle/setLevel/refresh to use correct endpoint for non-EP01 devices;
 *
 *                                   TODO: switch type configuration settings for _TZ3210_wdexaypg 'TS110E_LONSONHO_DIMMER'
 *                                   TODO: LED configuration settings
@@ -97,7 +97,7 @@ ver 0.8.1  2026/04/27 kkossev      - bugfix: NumberFormatException for hex strin
 */
 
 def version() { '0.8.1' }
-def timeStamp() { '2026/04/27 7:38 AM' }
+def timeStamp() { '2026/04/28 5:03 PM' }
 
 @Field static final Boolean _DEBUG = false
 
@@ -265,7 +265,9 @@ boolean isOzSmartThings() { device.getDataValue("manufacturer") == "_TZE200_1agw
     "_TZE200_3p5ydos3": [ numEps: 1, model: "TS0601", inClusters: "0004,0005,EF00,0000",          joinName: "BSEED Zigbee Dimmer" ],                              // https://www.bseed.com/collections/zigbee-series/products/bseed-eu-russia-new-zigbee-touch-wifi-light-dimmer-smart-switch
     "_TZE200_e3oitdyu": [ numEps: 2, model: "TS0601", inClusters: "0000,0004,0005,EF00",          joinName: "Moes ZigBee Dimmer Switch 2CH"],                     // https://community.hubitat.com/t/moes-dimmer-module-2ch/110512 
     "_TZ3210_k1msuvg6": [ numEps: 1, model: "TS110E", inClusters: "0004,0005,0003,0006,0008,EF00,0000", joinName: "Girier Zigbee 1-Gang Dimmer module"],          // https://community.hubitat.com/t/girier-tuya-zigbee-3-0-light-switch-module-smart-diy-breaker-1-2-3-4-gang-supports-2-way-control/104546/36?u=kkossev
-    "GLEDOPTO":         [ numEps: 1, model: "GL-SD-001", inClusters: "0000,0003,0004,0005,0006,0008,1000", joinName: "Gledopto Triac Dimmer"],                    //
+    "GLEDOPTO":         [ numEps: 1, model: "GL-SD-001",  inClusters: "0000,0003,0004,0005,0006,0008,0300,1000", joinName: "Gledopto Triac Dimmer"],               // GL-SD-001 and GL-SD-001P (endpointId 0B)
+    "GL-SD-003P":       [ numEps: 1, model: "GL-SD-003P", inClusters: "0000,0003,0004,0005,0006,0008,0300,1000", joinName: "Gledopto DIN Rail Triac Dimmer"],       // GL-SD-003P (endpointId assumed 0B - not yet verified)
+    "GL-SD-301P":       [ numEps: 1, model: "GL-SD-301P", inClusters: "0000,0003,0004,0005,0006,0008,0300,1000", joinName: "Gledopto Triac Dimmer GL-SD-301P"],     // GL-SD-301P (endpointId assumed 0B - not yet verified)
     "_TZ3210_pagajpog": [ numEps: 2, model: "TS110E", inClusters: "0005,0004,0006,0008,E001,0000", joinName: "Lonsonho Tuya Smart Zigbee Dimmer"],                // https://community.hubitat.com/t/release-tuya-lonsonho-1-gang-and-2-gang-zigbee-dimmer-module-driver/60372/76?u=kkossev
     "_TZ3210_4ubylghk": [ numEps: 2, model: "TS110E", inClusters: "0004,0005,0006,0008,0300,EF00,0000", joinName: "Lonsonho Tuya Smart Zigbee Dimmer"],           // https://community.hubitat.com/t/driver-support-for-tuya-dimmer-module-model-ts110e-manufacturer-tz3210-4ubylghk/116077?u=kkossev
     "_TZ3210_ngqk6jia": [ numEps: 1, model: "TS110E", inClusters: "0003,0005,0004,0006,0008,E001,1000,0000", joinName: "Lonsonho Smart Zigbee Dimmer"],           // KK
@@ -450,12 +452,27 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
             preferences   : []
     ],
     
+    "GLEDOPTO_DIMMER"  : [
+            description   : "Gledopto Dimmer",
+            models        : ["GL-SD-001", "GL-SD-001P", "GL-SD-003P", "GL-SD-301P"],
+            fingerprints  : [
+                [numEps: 1, profileId:"0104", endpointId:"0B", inClusters:"0000,0003,0004,0005,0006,0008,1000",      outClusters:"0019", model:"GL-SD-001",  manufacturer:"GLEDOPTO", deviceJoinName: "Gledopto Triac Dimmer GL-SD-001"],
+                [numEps: 1, profileId:"0104", endpointId:"0B", inClusters:"0000,0003,0004,0005,0006,0008,0300,1000", outClusters:"0019", model:"GL-SD-001P", manufacturer:"GLEDOPTO", deviceJoinName: "Gledopto Triac Dimmer GL-SD-001P"],
+                [numEps: 1, profileId:"0104", endpointId:"0B", inClusters:"0000,0003,0004,0005,0006,0008,0300,1000", outClusters:"0019", model:"GL-SD-003P", manufacturer:"GLEDOPTO", deviceJoinName: "Gledopto DIN Rail Triac Dimmer GL-SD-003P"],  // endpointId assumed 0B - not yet verified
+                [numEps: 1, profileId:"0104", endpointId:"0B", inClusters:"0000,0003,0004,0005,0006,0008,0300,1000", outClusters:"0019", model:"GL-SD-301P", manufacturer:"GLEDOPTO", deviceJoinName: "Gledopto Triac Dimmer GL-SD-301P"],           // endpointId assumed 0B - not yet verified
+            ],
+            deviceJoinName: "Gledopto Triac Dimmer",
+            capabilities  : ["SwitchLevel": true],
+            attributes    : ["healthStatus": "unknown", "powerSource": "mains"],
+            configuration : [],
+            preferences   : []
+    ],
+
     "OTHER_OEM_DIMMER"  : [
             description   : "Other OEM Dimmer",
-            models        : ["gq8b1uv", "GL-SD-001"],
+            models        : ["gq8b1uv"],
             fingerprints  : [
                 [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"gq8b1uv", manufacturer:"gq8b1uv", deviceJoinName: "TUYATEC Zigbee smart dimmer"],                         // https://www.aliexpress.com/item/4001242513879.html
-                [numEps: 1, profileId:"0104", endpointId:"01", inClusters:"0004,0005,EF00,0000", outClusters:"0019,000A", model:"GL-SD-001", manufacturer:"GLEDOPTO", deviceJoinName: "Gledopto Triac Dimmer"]                          // https://www.aliexpress.us/item/3256804518783061.html https://github.com/Koenkk/zigbee2mqtt/issues/12793
             ],
             deviceJoinName: "Other OEM Dimmer",
             capabilities  : ["SwitchLevel": false],
@@ -474,6 +491,7 @@ def isTS110E()             { return getDW().getModelGroup().contains("TS110E_DIM
 def isGirier()             { return getDW().getModelGroup().contains("TS110E_GIRIER_DIMMER") }
 def isLonsonho()           { return getDW().getModelGroup().contains("TS110E_LONSONHO_DIMMER") }
 def isTuyaBulb()           { return getDW().getModelGroup().contains("TS0505B_TUYA_BULB") }
+def isGledopto()           { return getDW().getModelGroup().contains("GLEDOPTO_DIMMER") }
 def isUnknown()            { return getDW().getModelGroup().contains("UNKNOWN") }
 
 void parse(String description) {
@@ -801,8 +819,9 @@ def refresh() {
     state.states["isRefresh"] = true    
     runInMillis( REFRESH_TIMER, clearRefreshRequest, [overwrite: true])                 // 3 seconds
     if (isParent()) {
-        logDebug "refresh: parent ${indexToChildDni(0)}"
-        ArrayList<String> cmds = cmdRefresh(indexToChildDni(0))
+        def childDni = endpointIdToChildDni(getDestinationEP())
+        logDebug "refresh: parent ${childDni}"
+        ArrayList<String> cmds = cmdRefresh(childDni)
         sendZigbeeCommands(cmds)
     } else {
         logDebug "refresh: child ${device.deviceNetworkId}"
@@ -815,7 +834,7 @@ def on() {
     getDW().scheduleCommandTimeoutCheck()
     setCmdTimeNow()
     if (isParent()) {
-        sendZigbeeCommands(cmdSwitch(indexToChildDni(0), 1))
+        sendZigbeeCommands(cmdSwitch(endpointIdToChildDni(getDestinationEP()), 1))
     } else {
         parent?.doActions( parent?.cmdSwitch(device.deviceNetworkId, 1) )
     }
@@ -826,7 +845,7 @@ def off() {
     setCmdTimeNow()
     getDW().scheduleCommandTimeoutCheck()
     if (isParent()) {
-        sendZigbeeCommands(cmdSwitch(indexToChildDni(0), 0))
+        sendZigbeeCommands(cmdSwitch(endpointIdToChildDni(getDestinationEP()), 0))
     } else {
         parent?.doActions( parent?.cmdSwitch(device.deviceNetworkId, 0) )
     }
@@ -838,7 +857,7 @@ def toggle() {
     getDW().scheduleCommandTimeoutCheck()
     logTrace "toggle: ... getParent()=${getParent()}"
     if (isParent()) {
-        sendZigbeeCommands(cmdSwitchToggle(indexToChildDni(0)))
+        sendZigbeeCommands(cmdSwitchToggle(endpointIdToChildDni(getDestinationEP())))
     } else {
         parent?.doActions( parent.cmdSwitchToggle(device.deviceNetworkId))
     }
@@ -853,7 +872,7 @@ def setLevel(level, duration=0) {
     }
     if (isParent()) {
         def value = levelToValue(level)
-        sendZigbeeCommands(cmdSetLevel(indexToChildDni(0), value, duration))
+        sendZigbeeCommands(cmdSetLevel(endpointIdToChildDni(getDestinationEP()), value, duration))
     } else {
         def value = levelToValue(level)
         parent?.doActions( parent?.cmdSetLevel(device.deviceNetworkId, value, duration) )
@@ -1925,12 +1944,12 @@ def initialized() {
     
     if (isParent()) {
         createChildDevices()   
-        if (true /*device.getDataValue("model") == "TS0601"*/) {    // TODO !! must be called for TS0011E also! TODO: isTuya() !
+        if (!isGledopto()) {    // Gledopto devices use standard ZCL clusters, no Tuya magic needed
             logDebug "spelling tuyaBlackMagic()"
             cmds += tuyaBlackMagic()
         }
         else {
-            logDebug "tuyaBlackMagic() was skipped for model ${device.getDataValue('model')}"
+            logDebug "tuyaBlackMagic() was skipped for Gledopto device model ${device.getDataValue('model')}"
         }
         ArrayList<String> configCmds = listenChildDevices()
         if (configCmds != null) {
