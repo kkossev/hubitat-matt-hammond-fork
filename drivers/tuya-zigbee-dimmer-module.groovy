@@ -79,7 +79,8 @@ ver 0.7.7  2025/10/04 kkossev      - added TS0601 _TZE204_znvwzxkq Zemismart Zig
 ver 0.7.8  2025/11/11 kkossev      - added TS0601 _TZE204_68utemio - thanks@mtate; added TS0601 _TZE204_lawxy9e2 _TZE200_lawxy9e2 Tuya Fan and Light switch @wdguezv 
 ver 0.7.9  2025/11/30 kkossev      - added TS0601 _TZE284_e1hutaaj Zemismart Zigbee Touch Fan Controller @dazpad
 ver 0.8.0  2026/03/30 kkossev      - added TS0601 _TZE284_jtbgusdc and _TZE284_nqqylykc AVATTO dimmers -thanks @callumgw 
-ver 0.8.1  2026/04/28 kkossev      - bugfix: NumberFormatException for hex string endpoint ID (GLEDOPTO GL-SD-001P) @jw970065; added GLEDOPTO_DIMMER profile for GL-SD-001/001P/003P/301P; fixed on/off/toggle/setLevel/refresh to use correct endpoint for non-EP01 devices;
+ver 0.8.1  2026/04/28 kkossev      - DO_NOT_USE!: NumberFormatException for hex string endpoint ID (GLEDOPTO GL-SD-001P) @jw970065; added GLEDOPTO_DIMMER profile for GL-SD-001/001P/003P/301P; fixed on/off/toggle/setLevel/refresh to use correct endpoint for non-EP01 devices;
+ver 0.8.2  2026/05/02 kkossev      - getChildByEndpointId() critical bug fix (introduced in version 0.8.1); skipped refresh() for TS0601 devices;
 *
 *                                   TODO: switch type configuration settings for _TZ3210_wdexaypg 'TS110E_LONSONHO_DIMMER'
 *                                   TODO: LED configuration settings
@@ -96,8 +97,8 @@ ver 0.8.1  2026/04/28 kkossev      - bugfix: NumberFormatException for hex strin
 *
 */
 
-def version() { '0.8.1' }
-def timeStamp() { '2026/04/28 5:03 PM' }
+def version() { '0.8.2' }
+def timeStamp() { '2026/05/02 9:15 AM' }
 
 @Field static final Boolean _DEBUG = false
 
@@ -454,12 +455,13 @@ def config() { return modelConfigs[device.getDataValue("manufacturer")] }
     
     "GLEDOPTO_DIMMER"  : [
             description   : "Gledopto Dimmer",
-            models        : ["GL-SD-001", "GL-SD-001P", "GL-SD-003P", "GL-SD-301P"],
+            models        : ["GL-SD-001", "GL-SD-001P", "GL-SD-003P", "GL-SD-301P", "LCT007"],
             fingerprints  : [
                 [numEps: 1, profileId:"0104", endpointId:"0B", inClusters:"0000,0003,0004,0005,0006,0008,1000",      outClusters:"0019", model:"GL-SD-001",  manufacturer:"GLEDOPTO", deviceJoinName: "Gledopto Triac Dimmer GL-SD-001"],
                 [numEps: 1, profileId:"0104", endpointId:"0B", inClusters:"0000,0003,0004,0005,0006,0008,0300,1000", outClusters:"0019", model:"GL-SD-001P", manufacturer:"GLEDOPTO", deviceJoinName: "Gledopto Triac Dimmer GL-SD-001P"],
                 [numEps: 1, profileId:"0104", endpointId:"0B", inClusters:"0000,0003,0004,0005,0006,0008,0300,1000", outClusters:"0019", model:"GL-SD-003P", manufacturer:"GLEDOPTO", deviceJoinName: "Gledopto DIN Rail Triac Dimmer GL-SD-003P"],  // endpointId assumed 0B - not yet verified
                 [numEps: 1, profileId:"0104", endpointId:"0B", inClusters:"0000,0003,0004,0005,0006,0008,0300,1000", outClusters:"0019", model:"GL-SD-301P", manufacturer:"GLEDOPTO", deviceJoinName: "Gledopto Triac Dimmer GL-SD-301P"],           // endpointId assumed 0B - not yet verified
+                [numEps: 1, profileId:"0104", endpointId:"0B", inClusters:"0000,0003,0004,0005,0006,0008,0300,1000", outClusters:"0019", model:"LCT007", manufacturer:"Signify Netherlands B.V.", deviceJoinName: "Philips Hue LCT007 (testing)"],             // testing only
             ],
             deviceJoinName: "Gledopto Triac Dimmer",
             capabilities  : ["SwitchLevel": true],
@@ -511,7 +513,7 @@ void parse(String description) {
             logTrace "parse: catchall clusterId=${descMap?.clusterId} command=${descMap?.command} data=${descMap?.data}"
             if (descMap?.command == "0B") {
                 logDebug "parse: catchall received confirmation from clusterId=${descMap?.clusterId} for command=${descMap?.command} data=${descMap?.data}"
-                return
+//                return
             }
             else if (descMap?.clusterId == "EF00") {
                 parseTuyaCluster(descMap)
@@ -558,7 +560,7 @@ void parse(String description) {
             case 0x0006: // switch state
                 logTrace "parse: on/off cluster 0x0006 command ${descMap?.command} attribute ${descMap?.attrId} value ${value}"
                 if (descMap?.command == "07" && descMap?.data.size() >= 1) {
-                    logDebug "parse: received Configure Reporting Response for cluster:${descMap.clusterInt} attribute ${escMap?.attrId}, data=${descMap.data} (Status: ${descMap.data[0]=="00" ? 'Success' : '<b>Failure</b>'})"
+                    logDebug "parse: received Configure Reporting Response for cluster:${descMap.clusterInt} attribute ${descMap?.attrId}, data=${descMap.data} (Status: ${descMap.data[0]=="00" ? 'Success' : '<b>Failure</b>'})"
                     break
                 }
                 if (descMap?.command == "0B" && descMap?.data.size() >= 2) {
@@ -569,7 +571,7 @@ void parse(String description) {
                 }
                 if (descMap?.attrId == "0000") {
                     if (isGirier() && descMap?.command == "01") {
-                        logDebug "parse: IGNORING command Response for cluster ${descMap.clusterInt} command ${descMap?.command} attribute ${escMap?.attrId}"
+                        logDebug "parse: IGNORING command Response for cluster ${descMap.clusterInt} command ${descMap?.command} attribute ${descMap?.attrId}"
                     }
                     else {
                         logTrace "on/off  endpoint=${descMap?.endpoint} isFirst=${isFirst} this=${this} child=${child} value=${value}"
@@ -814,6 +816,10 @@ if parent, then act on endpoint 1
 
 // sends Zigbee commands to refresh the switch and the level
 def refresh() {
+    if (isTS0601()) {
+        logDebug "refresh: skipping refresh for TS0601 devices"
+        return
+    }
     getDW().scheduleCommandTimeoutCheck()
     if (state.states == null) state.states = [:]
     state.states["isRefresh"] = true    
@@ -838,6 +844,9 @@ def on() {
     } else {
         parent?.doActions( parent?.cmdSwitch(device.deviceNetworkId, 1) )
     }
+    if (isGledopto() || settings.autoRefresh == true) {
+        runIn(1, 'refresh')
+    }
 }
 
 // sends Zigbee commands to turn the switch off
@@ -848,6 +857,9 @@ def off() {
         sendZigbeeCommands(cmdSwitch(endpointIdToChildDni(getDestinationEP()), 0))
     } else {
         parent?.doActions( parent?.cmdSwitch(device.deviceNetworkId, 0) )
+    }
+    if (isGledopto() || settings.autoRefresh == true) {
+        runIn(1, 'refresh')
     }
 }
 
@@ -867,7 +879,7 @@ def toggle() {
 def setLevel(level, duration=0) {
     setCmdTimeNow()
     getDW().scheduleCommandTimeoutCheck()
-    if (settings.autoRefresh == true) {
+    if (isGledopto() || settings.autoRefresh == true) {
         runIn(1, 'refresh')
     }
     if (isParent()) {
@@ -1552,7 +1564,7 @@ def childDnisToEndpointIds(List<String> childDnis) {
 def getChildByEndpointId(endpointId) {
     logTrace "getChildByEndpointId endpointId=${endpointId}"
     if (endpointId == null) return this
-    if (endpointIdToIndex(endpointId) == 0 && getChildDevices().size() == 0) {
+    if (getChildDevices().size() == 0) {
         logTrace "getChildByEndpointId returning this: ${this}"
         return this
     } else {
@@ -1703,28 +1715,29 @@ void getAllProperties() {
 
 // delete all Preferences
 void deleteAllSettings() {
+    List<String> deleted = []
     settings.each { it->
-        log.debug "deleting ${it.key}"
-        //this.removeSetting("${it.key}")
+        deleted << it.key
         device.removeSetting("${it.key}")
     }
+    logDebug "deleteAllSettings: deleted [${deleted.join(', ')}]"
     logInfo  "All settings (preferences) DELETED"
 }
 
 // delete all attributes
 void deleteAllCurrentStates() {
+    List<String> deleted = []
     device.properties.supportedAttributes.each { it->
-        log.debug "deleting $it"
+        deleted << "$it"
         device.deleteCurrentState("$it")
     }
+    logDebug "deleteAllCurrentStates: deleted [${deleted.join(', ')}]"
     logInfo "All current states (attributes) DELETED"
 }
 
 // delete all State Variables
 void deleteAllStates() {
-    state.each { it->
-        log.debug "deleting state ${it.key}"
-    }
+    logDebug "deleteAllStates: deleted [${state.keySet().join(', ')}]"
     state.clear()
     logInfo "All States DELETED"
 }
@@ -1815,6 +1828,7 @@ void initializeVars( boolean fullInit = false ) {
     if (fullInit == true)  { device.updateSetting('ledMode', [value: null, type: 'enum'])}           //  no ledMode by default!
     if (fullInit == true)  { device.updateSetting('powerOnMode', [value: null, type: 'enum'])}       //  no powerOnMode by default!
     if (fullInit == true)  { device.updateSetting('lightType', [value: null, type: 'enum'])}         //  no lightType by default!
+    if (fullInit == true && isGledopto()) { device.updateSetting('autoRefresh', [value: true, type: 'bool']); logInfo 'autoRefresh enabled automatically for Gledopto device' }
 }
 
 // will be called when user selects Save Preferences
